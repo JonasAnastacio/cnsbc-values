@@ -1,0 +1,1073 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnsbc-console
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
+    chart: cnsbc-console
+    targetRevision: "25.1.1"
+    helm:
+      releaseName: ocadm-cnsbc-console
+      values: |
+        # Default values for Cloud Native SBC Console.
+        # Declare variables to be passed into your templates.
+
+        ##################################################################################
+        #
+        # Start of Global Parameters
+        #
+        ##################################################################################
+
+        # Configure fields which will be applicable for all sections
+        global:
+          # applicationImageStore specifies the registry from where the image should be pulled
+          # Required
+          applicationImageStore:
+            registry: "image-registry.openshift-image-registry.svc:5000"
+            repositoryPrefix: "cnsbc"
+          # imagePullSecrets is for configuring secrets used for pulling images from private registries, the value references
+          # one or more secrets to be used when pulling images. Secrets must be manually created in the target namespace.
+          # Optional
+          # This global field doesn't apply to microservices part of console-database sub-chart
+          imagePullSecrets: []
+          # pullPolicy specifies whether an image needs to be pulled
+          # Optional; Allowed values: Always, IfNotPresent, Never; Default: Always;
+          pullPolicy: &pullPolicyRef "Always"
+          # serviceAccountName is used for configuring name of service account which will be used by all pods
+          # Optional
+          # Service Account can be configured here or can be individually in subcharts as well
+          serviceAccountName: &serviceAccountName ""
+          # iamStaticIpAddress is the Static IP Address of Console IAM Gateway
+          # Required
+          iamStaticIpAddress: &iamIgwIp "10.0.2.112"
+          # iamPublicHttpsSignalingPort represents the HTTPs port for the IAM Gateway.
+          # Optional; Default: 443
+          iamPublicHttpsSignalingPort: &iamIgwPort 443
+          # coreStaticIpAddress is the Static IP Address of Console Core Gateway
+          # Required
+          coreStaticIpAddress: &coreIgwIp "10.0.2.113"
+          # corePublicHttpsSignalingPort represents the HTTPs port for the Core Gateway.
+          # Optional; Default: 443
+          corePublicHttpsSignalingPort: &coreIgwPort 443
+          # routesConfig is for configuring routes for Cloud Native SBC services 
+          # 
+          # Example: 
+          #   Let's look at the configuration manager's service
+          #       NAME                                       TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
+          #       sbcapp-configuration-manager-rest          ClusterIP      10.xx.xx.xxx    <none>          8080
+          #
+          #       Below 'host' will be 'NAME' and 'port' will be 'PORT'
+          #
+          routesConfig:
+            services:
+              # For Configuration Manager
+              configMgr:
+                # host name of the service (Use the service which has 'rest' as suffix)
+                # Required
+                host: "ocadm-cnsbc-config-service-rest"
+                # Port used by the service
+                # Optional; Default: 80
+                port: "8080"
+              # For CLI Proxy
+              cliProxy:
+                # host name of the service
+                # Required
+                host: "ocadm-cnsbc-cnsbc-cli-proxy-service"
+                # Port used by the service
+                # Optional; Default: 80
+                port: "8080"
+              # File Manager
+              fileMgr:
+                # host name of the Service
+                # Required
+                host: "ocadm-cnsbc-cnsbc-file-manager-service"
+                # Port used by the service
+                # Optional; Default: 80
+                port: "8080"
+          # customExtension is for adding custom labels and annotations
+          customExtension:
+            # allResources specifies labels and annotation is applied to all resources
+            allResources:
+              # Labels section
+              # Optional
+              labels: {}
+              # Annotation section
+              # Optional
+              annotations: {}
+            # lbServices specifies labels and annotation is applied only to Load Balancer services
+            lbServices:
+              # Labels section
+              # Optional
+              labels: {}
+              # Annotation section
+              # Optional
+              annotations:
+                metallb.universe.tf/address-pool: "oam"
+            # lbDeployments specifies labels and annotation is applied only to Load Balancer deployments
+            lbDeployments:
+              # Labels section
+              # Optional
+              labels: {}
+              # Annotation section
+              # Optional
+              annotations: {}
+          # affinity helps us configure node affinity/anti-affinity for all pods here
+          # Optional
+          # Example: 
+          # affinity: 
+          #   nodeAffinity: 
+          #     requiredDuringSchedulingIgnoredDuringExecution: 
+          #       nodeSelectorTerms: 
+          #       - matchExpressions: 
+          #         - key: "zone" 
+          #             operator: In 
+          #               values: 
+          #               - "us-east1"
+          affinity: {}
+          ##################################################################################
+          #
+          # Start of Helm Test Parameters
+          #
+          ##################################################################################
+
+          # Helm test ensures the successful installation of Cloud Native SBC Console
+          test:
+            # timeout is the time duration for readiness checks of all pods to see if they are ready to accept traffic
+            # Optional; Allowed Range: 300 to 1800; Default: 300
+            # Units: Seconds
+            # If timeout value increased, then --timeout <value> needs to be specified with helm test command
+            timeout: 300
+            # serviceAccountName is used for configuring service account that's used to run the Helm test
+            # Optional
+            serviceAccountName: *serviceAccountName
+            # securityContext defines privilege and access control settings for pods
+            # Optional; Default: 
+            # securityContext: 
+            #   runAsUser: 1000
+            #   runAsGroup: 1000
+            securityContext:
+              runAsUser: 1000
+              runAsGroup: 1000
+            # resources configures the maximum resources we can allocate to the helm test
+            # Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+            resources:
+              requests:
+                # Memory utilization
+                # Optional; Default: "1Gi";
+                memory: "1Gi"
+                # CPU utilization
+                # Optional; Default: "500m";
+                cpu: "500m"
+              limits:
+                # Memory utilization
+                # Optional; Default: "1Gi";
+                memory: "1Gi"
+                # CPU utilization
+                # Optional; Default: "500m";
+                cpu: "500m"
+            # image information of the Helm test
+            image:
+              # registry where the image is present
+              # Optional
+              # This field is required if 'global.applicationImageStore.registry' is not configured
+              registry: ""
+              # repository where the image is stored
+              # Optional
+              # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name of the image
+              # Optional; Default: "helm-test"
+              name: "helm-test"
+              # tag of the image
+              # Required
+              tag: "25.1.1"
+              # pullPolicy specifies an imagePullPolicy.
+              # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+              pullPolicy: *pullPolicyRef
+              ##################################################################################
+              #
+              # End of Helm Test Parameters
+              #
+              ##################################################################################
+        ##################################################################################
+        #
+        # End of Global Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Console Database Parameters
+        #
+        ##################################################################################
+
+        # Console Database is used to store IAM related information 
+        # Helm Upgrade doesn't work for this sub-section, so it's recommended not to change any parameters during upgrade.
+        console-database:
+          # image details of Console Database
+          image:
+            # pullPolicy specifies an imagePullPolicy.
+            # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+            pullPolicy: *pullPolicyRef
+            # pull secret details
+            pullSecrets:
+              # enabled parameter is used by secretName to check if secret is required for pulling images
+              # Optional; Allowed Values: true, false; Default: false
+              enabled: false
+              # secretName is used for configuring imagePullSecret for Console Database pods
+              # dependencies: If 'enabled: true', secretName is Required
+              # The global imagePullSecret doesn't apply here
+              secretName: ""
+          # datadirVolumeClaimTemplate is for configuring specification of Persistent Volume Claim template for Console Database
+          datadirVolumeClaimTemplate:
+            # Storage Class used by the volume
+            # Optional; Default: standard
+            # Storage Class provided here should support ReadWriteOnce
+            storageClassName: "standard"
+            # Resource consumption section
+            resources:
+              requests:
+                # Storage capacity
+                # Optional; Default: 20Gi
+                storage: 20Gi
+          # podSpec is for providing specification of Console Database pods
+          podSpec:
+            # affinity helps us configure node affinity/anti-affinity here
+            # Optional
+            # If both global.affinity and below affinity is configured, below affinity will take effect
+            affinity: {}
+            # init containers running inside Console Database pods
+            initContainers:
+              # Container specification of fixdatadir container
+              - name: "fixdatadir"
+                # Resource utilization section
+                resources:
+                  # Limits section
+                  limits:
+                    # CPU utilization
+                    # Optional; Default: 0.5
+                    cpu: 0.5
+                    # Memory utilization
+                    # Optional; Default: 200Mi
+                    memory: 200Mi
+                  # Requests section
+                  requests:
+                    # CPU utilization
+                    # Optional; Default: 0.1
+                    cpu: 0.1
+                    # Memory utilization
+                    # Optional; Default: 100Mi
+                    memory: 100Mi
+              # Container specification of initconf container
+              - name: "initconf"
+                # Resource utilization section
+                resources:
+                  # Limits section
+                  limits:
+                    # CPU utilization
+                    # Optional; Default: 0.5
+                    cpu: 0.5
+                    # Memory utilization
+                    # Optional; Default: 200Mi
+                    memory: 200Mi
+                  # Requests section
+                  requests:
+                    # CPU utilization
+                    # Optional; Default: 0.1
+                    cpu: 0.1
+                    # Memory utilization
+                    # Optional; Default: 100Mi
+                    memory: 100Mi
+              # Container specification of initmysql container
+              - name: "initmysql"
+                # Resource utilization section
+                resources:
+                  # Limits section
+                  limits:
+                    # CPU utilization
+                    # Optional; Default: 1
+                    cpu: 1
+                    # Memory utilization
+                    # Optional; Default: 2Gi
+                    memory: 2Gi
+                  # Requests section
+                  requests:
+                    # CPU utilization
+                    # Optional; Default: 0.5
+                    cpu: 0.5
+                    # Memory utilization
+                    # Optional; Default: 500Mi
+                    memory: 500Mi
+            # containers running inside Console Database pods
+            containers:
+              # Container specification of mysql container
+              - name: "mysql"
+                # Resource utilization section
+                resources:
+                  # Limits section
+                  limits:
+                    # CPU utilization
+                    # Optional; Default: 1.8
+                    cpu: 1.8
+                    # Memory utilization
+                    # Optional; Default: 4Gi
+                    memory: 4Gi
+                  # Requests section
+                  requests:
+                    # CPU utilization
+                    # Optional; Default: 0.5
+                    cpu: 0.5
+                    # Memory utilization
+                    # Optional; Default: 1Gi
+                    memory: 1Gi
+              # Container specification of sidecar container     
+              - name: "sidecar"
+                # Resource utilization section
+                resources:
+                  # Limits section
+                  limits:
+                    # CPU utilization
+                    # Optional; Default: 0.2
+                    cpu: 0.2
+                    # Memory utilization
+                    # Optional; Default: 200Mi
+                    memory: 200Mi
+                  # Requests section
+                  requests:
+                    # CPU utilization
+                    # Optional; Default: 0.01
+                    cpu: 0.01
+                    # Memory utilization
+                    # Optional; Default: 50Mi
+                    memory: 50Mi
+          # Router Configuration
+          router:
+            # Pod Specification
+            podSpec:
+              # affinity helps us configure node affinity/anti-affinity here
+              # Optional
+              # If both global.affinity and below affinity is configured, below affinity will take effect
+              affinity: {}
+              # containers running inside Console Router pod
+              containers:
+                # Container specification of router container
+                - name: "router"
+                  # Resource utilization section
+                  resources:
+                    # Limits section
+                    limits:
+                      # CPU utilization
+                      # Optional; Default: 1
+                      cpu: 1
+                      # Memory utilization
+                      # Optional; Default: 512Mi
+                      memory: 512Mi
+                    # Requests section
+                    requests:
+                      # CPU utilization
+                      # Optional; Default: 0.5
+                      cpu: 0.5
+                      # Memory utilization
+                      # Optional; Default: 128Mi
+                      memory: 128Mi
+          # rootSecret is for configuring name of the secret containing the credentials of root user of the Database
+          # Required
+          # The Password should be stored in the following (Key: Value) pairs in the secret
+          #   rootUser: username of the root user
+          #   rootHost: host of the db
+          #   rootPassword: password of the root user
+          rootSecret: &rootSecretName "root-user"
+        # This is the OCIObject Storage required to be configured in order to enable encryption
+        # oci:
+        #   user: "ocid1.user.oc1..."
+        #   keySecret: "oci-credentials"
+        #   keyFingerprint: ""
+        #   tenancy: "ocid1.tenancy.oc1..."
+        #   compartment: "ocid1.compartment.oc1..."
+        #   virtualVault: "ocid1.vault.oc1.."
+        #   masterKey: "ocid1.key.oc1..."
+        #   caCertificate: ""
+        #   endpoints:
+        #     encryption: "<identifier>-crypto.kms.<region>.oraclecloud.com"
+        #     management: "<identifier>-management.kms.<region>.oraclecloud.com"
+        #     vaults: "vaults.<region>.oci.oraclecloud.com"
+        #     secrets: "secrets.vaults.<region>.oci.oraclecloud.com"
+
+        ##################################################################################
+        # Start of Backup and Recovery Parameters
+        ##################################################################################
+
+        # # Start configuration for periodic backup
+        # # Backup profile specifications for the cluster, which is referenced as backupProfileName in backupSchedules
+        # backupProfiles:
+        #   # Name of the backup profile
+        #   # Required  
+        # - name: ""
+        #   # dumpInstance section    
+        #   dumpInstance:
+        #     # storage
+        #     storage:
+        #       # s3 section
+        #       s3:
+        #         # Path in the bucket where the dump files are stored
+        #         # Required
+        #         prefix: ""
+        #         # Field for specifying the name of the secret with S3 configuration and credentials
+        #         # Required
+        #         config: ""
+        #         # Name of the S3 bucket where the dump is stored
+        #         # Required 
+        #         bucketName: ""
+        #         # It is being used in configuration files
+        #         # optional, Default: default
+        #         profile: "default"
+        #         # Endpoint URL
+        #         # Required
+        #         endpoint: ""
+
+        # # Schedules for periodically executed backups
+        # backupSchedules:
+        #   # Name of the backup schedule
+        #   # Required
+        # - name: ""
+        #   # The schedule of the job, in a cron expression syntax
+        #   # Required
+        #   schedule: ""
+        #   # Name of the backupProfile to be used
+        #   # Required
+        #   backupProfileName: ""
+        #   # Whether the schedule is enabled or not
+        #   # Optional, default - true
+        #   enabled: true 
+
+        # # Start configuration for restore
+        # # Database initialization instructions
+        # initDB:
+        #   # Specification of the dump to initialize the database
+        #   dump:
+        #     # Name of the dump
+        #     name: ""
+        #     # s3 section
+        #     s3:
+        #       # Path in the bucket where the dump files are stored
+        #       # Required
+        #       prefix: ""
+        #      # Config field for specifying the name of the secret with S3 configuration and credentials
+        #       # Required
+        #       config: ""
+        #       # Name of the S3 bucket where the dump is stored
+        #       # Required        
+        #       bucketName: ""
+        #       # It is being used in configuration files
+        #       # Optional
+        #       profile: "default"
+        #       # Endpoint URL
+        #       # Required
+        #       endpoint: ""
+
+        ##################################################################################
+        # End of Backup and Recovery Parameters
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # End of Console Database Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Console IAM Parameters
+        #
+        ##################################################################################
+
+        # An Identity Access Management system used for authorization/authentication of users
+        console-iam:
+          # iam is for configuring Identity Access Manager values
+          iam:
+            # image configuration of IAM
+            image:
+              # registry where the image is present
+              # Optional
+              # This field is required if 'global.applicationImageStore.registry' is not configured
+              registry: ""
+              # repository where the image is stored
+              # Optional
+              # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name of the image
+              # Optional; Default: "console-iam"
+              name: "console-iam"
+              # tag of the image
+              # Optional
+              tag: ""
+              # pullPolicy specifies an imagePullPolicy.
+              # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+              pullPolicy: *pullPolicyRef
+            # Service Account configuration
+            serviceAccount:
+              # create field specifies whether a service account should be created
+              # Optional; Allowed Values: true, false; Default: true
+              create: true
+              # name of the service account to use.
+              # Optional
+              # Note:
+              #   1. If not set and create is true, a service account is created, and the name will be generated
+              #   2. If set and create is false, the provided service account will be used
+              #   3. If set and create is true, a service account is created, and the provided name will be used
+              name: *serviceAccountName
+            # affinity helps us configure node affinity/anti-affinity here
+            # Optional
+            # If both global.affinity and below affinity is configured, below affinity will take effect
+            affinity: {}
+            # resource requests and limits of IAM
+            resources:
+              # limits section
+              limits:
+                # CPU utilization
+                # Optional; Default: 1
+                cpu: 1
+                # Memory utilization
+                # Optional; Default: 1Gi
+                memory: 1Gi
+              # requests section
+              requests:
+                # CPU utilization
+                # Optional; Default: 0.5
+                cpu: 0.5
+                # Memory utilization
+                # Optional; Default: 512Mi
+                memory: 512Mi
+            # service configuration of Console IAM
+            service:
+              # httpPort specifies the port on which Console IAM pod will be running
+              # Optional; Default: 8285
+              httpPort: &iamServiceHttpPort 8285
+            # adminIamSecret configures name of the secret storing the IAM Administrator's password
+            # Required
+            # The Password should be stored in key: adminPasswordKey
+            adminIamSecret: "iam-admin-credentials"
+            # dbConfig represents database configuration used by IAM to communicate with Console Database
+            dbConfig:
+              # adminDbSecret configures name of the secret storing the Database admin password
+              # Required
+              # The Password should be stored in the following (Key: Value) pairs in the secret
+              #   dbUserNameKey: username of database admin used by Console
+              #   dbPasswordKey: password of database admin used by Console
+              adminDbSecret: "db-credentials"
+          # Database Client values for running queries in DB
+          databaseclient:
+            # image configuration of Databaseclient
+            image:
+              # registry where the image is present
+              # Optional
+              # This field is required if 'global.applicationImageStore.registry' is not configured
+              registry: ""
+              # repository where the image is stored
+              # Optional
+              # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name of the image
+              # Optional; Default: "iam-databaseclient"
+              name: "iam-databaseclient"
+              # tag of the image
+              # Optional
+              tag: ""
+              # pullPolicy specifies an imagePullPolicy.
+              # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+              pullPolicy: *pullPolicyRef
+            # Resource requests and limits of Database Client
+            resources:
+              # limits section of CPU and Memory
+              limits:
+                # CPU utilization
+                # Optional; Default: 1
+                cpu: 1
+                # Memory utilization
+                # Optional; Default: 1Gi
+                memory: 1Gi
+              # requests section of CPU and Memory
+              requests:
+                # CPU utilization
+                # Optional; Default: 0.5
+                cpu: 0.5
+                # Memory utilization
+                # Optional; Default: 512Mi
+                memory: 512Mi
+            # config is used for Configurations for Database Client
+            config:
+              # log level configuration
+              logLevel:
+                # root specifies logging level for all processes
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+                root: "INFO"
+                # sql specifies logging level for database connection process
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+                sql: "INFO"
+            # rootSecret is for configuring name of the secret containing the credentials of root user of the Database
+            # Required
+            rootSecret: *rootSecretName
+          # Healthcheck of Console IAM
+          healthcheck:
+            # Healthcheck image configuration
+            image:
+              # registry where the image is present
+              # Optional
+              # This field is required if 'global.applicationImageStore.registry' is not configured
+              registry: ""
+              # repository where the image is stored
+              # Optional
+              # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name of the image
+              # Optional; Default: "iam-healthcheck"
+              name: "iam-healthcheck"
+              # tag of the image
+              # Optional
+              tag: ""
+              # pullPolicy specifies an imagePullPolicy.
+              # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+              pullPolicy: *pullPolicyRef
+            # Resource requests and limits of Healthcheck
+            resources:
+              # limits section of CPU and Memory
+              limits:
+                # CPU utilization
+                # Optional; Default: 0.5
+                cpu: 0.5
+                # Memory utilization
+                # Optional; Default: 0.5Gi
+                memory: 0.5Gi
+              # requests section of CPU and Memory
+              requests:
+                # CPU utilization
+                # Optional; Default: 0.3
+                cpu: 0.3
+                # Memory utilization
+                # Optional; Default: 308Mi
+                memory: 308Mi
+            # log levels configuration
+            logLevel:
+              # root specifies log level for all processes
+              # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+              root: "INFO"
+        ##################################################################################
+        #
+        # End of Console IAM Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of IAM Gateway Parameters
+        #
+        ##################################################################################
+
+        # An Ingress Gateway which routes traffic towards IAM
+        iam-gateway:
+          # image configuration of IAM Gateway
+          ingressGatewayImage: &igwImage
+            # registry where the image is present
+            # Optional
+            # This field is required if 'global.applicationImageStore.registry' is not configured
+            registry: ""
+            # repository where the image is stored
+            # Optional
+            # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+            repositoryPrefix: ""
+            # name of the image
+            # Optional; Default: "ocingress_gateway"
+            name: "ocingress_gateway"
+            # tag of the image
+            # Optional
+            tag: ""
+            # pullPolicy specifies an imagePullPolicy.
+            # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+            pullPolicy: *pullPolicyRef
+          # image configuration of IAM Init Container 
+          initContainersImage: &initImage
+            # registry where the image is present
+            # Optional
+            # This field is required if 'global.applicationImageStore.registry' is not configured
+            registry: ""
+            # repository where the image is stored
+            # Optional
+            # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+            repositoryPrefix: ""
+            # name of the image
+            # Optional; Default: "configurationinit"
+            name: "configurationinit"
+            # tag of the image
+            # Optional
+            tag: ""
+            # pullPolicy specifies an imagePullPolicy.
+            # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+            pullPolicy: *pullPolicyRef
+          # Service Account configuration
+          serviceAccount:
+            # create field specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Optional
+            # Note:
+            #   1. If not set and create is true, a service account is created, and the name will be generated
+            #   2. If set and create is false, the provided service account will be used
+            #   3. If set and create is true, a service account is created, and the provided name will be used
+            name: *serviceAccountName
+          # affinity helps us configure node affinity/anti-affinity here
+          # Optional
+          # If both global.affinity and below affinity is configured, below affinity will take effect
+          affinity: {}
+          # resource requests and limits of IAM Gateway
+          resources: &igwResources
+            # limits section
+            limits:
+              # CPU utilization of Ingress Gateway container
+              # Optional; Default: 2
+              cpu: 2
+              # CPU utilization of Init Service Container 
+              # Optional; Default: 1
+              initServiceCpu: 1
+              # Memory utilization of Ingress Gateway container
+              # Optional; Default: 2Gi
+              memory: 2Gi
+              # Memory utilization of Init Service container
+              # Optional; Default: 1Gi
+              initServiceMemory: 1Gi
+            # requests section
+            requests:
+              # CPU utilization of Ingress Gateway container
+              # Optional; Default: 0.5
+              cpu: 0.5
+              # CPU utilization of Init Service Container
+              # Optional; Default: 0.5
+              initServiceCpu: 0.5
+              # Memory utilization of Ingress Gateway container
+              # Optional; Default: 0.5Gi
+              memory: 0.5Gi
+              # Memory utilization of Init Service container
+              # Optional; Default: 0.5Gi
+              initServiceMemory: 0.5Gi
+          # service configuration of IAM Gateway pod
+          service:
+            # publicHttpsSignalingPort specifies port used for HTTPS/1.0 (secured SSL)
+            # Optional; Default: 443
+            publicHttpsSignalingPort: *iamIgwPort
+            # staticIpAddress configures IP Address to be used by IAM Gateway
+            # Required
+            staticIpAddress: *iamIgwIp
+            # ssl is for configuring HTTPS related configuration
+            ssl: &sslConfig
+              # tlsVersion is for configuring supported TLS versions
+              # Optional; Allowed values TLSv1.3, TLSv1.2 or both separated by a comma (Eg: TLSv1.3,TLSv1.2); Default: TLSv1.3
+              tlsVersion: "TLSv1.3"
+              # certSecretName is the name of the secret containing certificate related information
+              # Required
+              # The certificate related information should be stored in the following (Key: Value) pairs in the secret
+              #   pvt-key.pem: Store the private key
+              #   cert.crt: Store the certificate
+              #   caroot.cer: Store the CA Bundle
+              #   keystore.txt: Store the keystore password
+              #   truststore.txt: Store the truststore password
+              certSecretName: "console-ingress-secret"
+          # log is for configuring log level of IAM Gateway
+          log:
+            # level specifies log level of processes
+            level:
+              # root specifies log level for all processes
+              # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+              root: "WARN"
+              # ingress specifies log level for main application process
+              # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+              ingress: "WARN"
+              # console specifies log level of processes under console 
+              console:
+                # root specifies log level of all processes under Console
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+                root: "WARN"
+                # audit specifies log level of audit logs
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+                audit: "INFO"
+                # security specifies log level of security logs
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+                # dependencies: log.filters and log.masks configuration will matter, if the log level 
+                #               is atleast set to INFO
+                security: "INFO"
+            # filters to apply for security logs which are required to be recorded
+            # Optional
+            # dependencies: This section is relevant if security log level is atleast set to INFO
+            # Security logs for requests/responses coming to gateway whose headers and value matches with any of the 
+            # ones mentioned below will be logged at INFO level and rest of them will be logged at a level configured
+            # in 'log.level.console.security' field.
+            # For the headers where no value is mentioned, then all values coming with it will be considered
+            filters:
+              - headerName: "Content-Type"
+                headerValues:
+                  - "^application/x-www-form-urlencoded.*"
+                  - "^application/json.*"
+                  - "^application/problem+json.*"
+              - headerName: "Accept"
+                headerValues:
+                  - "^application/json.*"
+                  - "^application/ld+json.*"
+                  - "^application/xml.*"
+                  - "^multipart/form-data.*"
+              - headerName: "Authorization"
+                headerValues: []
+          # Console configuration of IAM Gateway
+          console:
+            # iam has fields specific for IAM gateway
+            iam:
+              # servicePort is used for configuring the http port used by the Ingress Gateway to reach Console IAM
+              # Optional; Default: 8285
+              # dependencies: Port number should match with console-iam.iam.service.httpPort else IAM gateway won't 
+              #               communicate with Console IAM
+              servicePort: *iamServiceHttpPort
+          # Optional, Default: set to .* this would allow all the IPs
+          # Configure this value with cluster IP and load Balancer IP network range 
+          # Use | separated values in case of multiple proxies
+          # For example:
+          # trustedProxies: "10\\.146\\.144\\..*|10\\.233\\..*\\..*"
+          # Please refer the breakdown below 
+          # | : refers to the OR symbol, used incase of multiple IP ranges
+          # \\. : is used to escape the . character 
+          # .* : used to allow digits 0-9 
+          # 10\\.146\\.144\\..* : Covers All IPs in the 10.146.144.* subnet
+          # 10\\.233\\..*\\..* : Covers All IPs in the 10.233.*.* subnet
+          # IPv6 ip range can also be configured as given below:
+          # trustedProxies: "2001\\:0db8\\:85a3\\:0000\\:.*|fd00\\:abcd\\:1234\\:.*"
+          trustedProxies: ".*"
+        ##################################################################################
+        #
+        # End of IAM Gateway Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Core Gateway Parameters
+        #
+        ##################################################################################
+
+        # An Ingress Gateway which routes traffic towards services of Cloud Native SBC
+        core-gateway:
+          # image configuration of Core Gateway 
+          # Images are same as IAM Gateway, thus anchors are used
+          ingressGatewayImage: *igwImage
+          # image configuration of Core Init Container 
+          # Images are same as IAM Gateway, thus anchors are used
+          initContainersImage: *initImage
+          # Service Account configuration
+          serviceAccount:
+            # create field specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Optional
+            # Note:
+            #   1. If not set and create is true, a service account is created, and the name will be generated
+            #   2. If set and create is false, the provided service account will be used
+            #   3. If set and create is true, a service account is created, and the provided name will be used
+            name: *serviceAccountName
+          # affinity helps us configure node affinity/anti-affinity here
+          # Optional
+          # If both global.affinity and below affinity is configured, below affinity will take effect
+          affinity: {}
+          # resource requests and limits of Core Gateway
+          # Optional
+          resources: *igwResources
+          # service configuration of Core Gateway pod
+          service:
+            # publicHttpsSignalingPort specifies port used for HTTPS/1.0 (secured SSL)
+            # Optional; Default: 443
+            publicHttpsSignalingPort: *coreIgwPort
+            # staticIpAddress configures IP Address to be used by IAM Gateway
+            # Required
+            staticIpAddress: *coreIgwIp
+            # ssl is for configuring HTTPS related configuration
+            # Required
+            ssl: *sslConfig
+          # log is for configuring log level of IAM Gateway
+          log:
+            # level specifies log level of processes
+            level:
+              # root specifies log level for all processes
+              # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+              root: "WARN"
+              # ingress specifies log level for main application process
+              # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+              ingress: "WARN"
+              # console specifies log level of processes under console 
+              console:
+                # root specifies log level of all processes under Console
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+                root: "WARN"
+                # audit specifies log level of audit logs
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+                audit: "INFO"
+                # security specifies log level of security logs
+                # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
+                security: "INFO"
+          # Console configuration of Core Gateway
+          console:
+            # Core Configuration
+            core:
+              # Session Timeout
+              # Optional; Allowed Range: 300 to 7200; Default: 1800
+              # Units: Seconds
+              sessionTimeout: 1800
+            # gui has fields specific for Console GUI
+            gui:
+              # servicePort specifies port where Console GUI service needs to run
+              # Optional; Default: 80
+              servicePort: &guiServicePort 80
+          # Optional, Default: set to .* this would allow all the IPs
+          # Configure this value with cluster IP and load Balancer IP network range 
+          # Use | separated values in case of multiple proxies
+          # For example:
+          # trustedProxies: "10\\.146\\.144\\..*|10\\.233\\..*\\..*"
+          # Please refer the breakdown below 
+          # | : refers to the OR symbol, used incase of multiple IP ranges
+          # \\. : is used to escape the . character 
+          # .* : used to allow digits 0-9 
+          # 10\\.146\\.144\\..* : Covers All IPs in the 10.146.144.* subnet
+          # 10\\.233\\..*\\..* : Covers All IPs in the 10.233.*.* subnet
+          # IPv6 ip range can also be configured as given below:
+          # trustedProxies: "2001\\:0db8\\:85a3\\:0000\\:.*|fd00\\:abcd\\:1234\\:.*"
+          trustedProxies: ".*"
+        ##################################################################################
+        #
+        # End of Core Gateway Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Console GUI Parameters
+        #
+        ##################################################################################
+
+        # A GUI service which is used to configure the Cloud Native SBC
+        console-gui:
+          # image configuration of Console GUI
+          image:
+            # registry where the image is present
+            # Optional
+            # This field is required if 'global.applicationImageStore.registry' is not configured
+            registry: ""
+            # repository where the image is stored
+            # Optional
+            # This field is required if 'global.applicationImageStore.repositoryPrefix' is not configured
+            repositoryPrefix: ""
+            # name of the image
+            # Optional; Default: "console-gui-service"
+            name: "console-gui-service"
+            # tag of the image
+            # Optional
+            tag: ""
+            # pullPolicy specifies an imagePullPolicy.
+            # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
+            pullPolicy: *pullPolicyRef
+          # Service Account configuration
+          serviceAccount:
+            # create field specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Optional
+            # Note:
+            #   1. If not set and create is true, a service account is created, and the name will be generated
+            #   2. If set and create is false, the provided service account will be used
+            #   3. If set and create is true, a service account is created, and the provided name will be used
+            name: *serviceAccountName
+          # affinity helps us configure node affinity/anti-affinity here
+          # Optional
+          # If both global.affinity and below affinity is configured, below affinity will take effect
+          affinity: {}
+          # security context configuration of pod
+          securityContext:
+            # runAsUSer configures user-id so that all processes of a container running in the pod will run with this user-id
+            # Optional; Allowed Range: 0 to Maximum value supported by Setup, '0' represents root user
+            runAsUser: 8000
+          # log is for configuring log level of console GUI
+          log:
+            # level specifies log level of processes
+            level:
+              # root specifies log level for all processes,
+              # multiple level of log can be added in future implementation
+              # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
+              root: "INFO"
+          # resource requests and limits
+          # Optional
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "250m"
+            limits:
+              memory: "3.5Gi"
+              cpu: "500m"
+          # service configuration of GUI pod
+          service:
+            # port is for configuring the http port of GUI pod
+            # Optional; Default: 80
+            # dependencies: Port number should match with core-gateway.console.gui.servicePort else core gateway won't 
+            #               communicate with Console GUI
+            port: *guiServicePort
+          # routesConfig is for configuring routes for Cloud Native SBC services 
+          # This configuration is optional. If a service is not available, leave the host and port fields empty.
+          # 
+          # Example: 
+          #   Let's look at the x1-service's service
+          #       NAME                                       TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)
+          #       cnsbcapp-cnsbc-x1engine-0                 ClusterIP      10.xx.xx.xxx    <none>          8080
+          #
+          #       Below 'host' will be 'NAME' and 'port' will be 'PORT'
+          #
+          routesConfig:
+            services:
+              # Configuration for X1-Service
+              # This service requires a hostname and a port.
+              X1-Service:
+                # Hostname of the cnsbc-x1engine-rest 
+                # Required
+                host: ""
+                # Port used by the cnsbc-x1engine-rest
+                # Optional; Default: 80
+                port: ""
+              # Configuration for LIX1-Proxy-0
+              # This proxy service requires a hostname and a port.
+              LIX1-Proxy-0:
+                # Hostname of the LIX1-Proxy-0
+                # Required
+                host: "ocadm-cnsbc-cnsbc-signaling-0"
+                # Port used by the LIX1-Proxy-0
+                # Optional; Default: 80
+                port: "8082"
+              # Configuration for LIX1-Proxy-1
+              # This proxy service requires a hostname and a port.
+              LIX1-Proxy-1:
+                # Hostname of the LIX1-Proxy-1
+                # Required
+                host: "ocadm-cnsbc-cnsbc-signaling-1"
+                # Port used by the LIX1-Proxy-1
+                # Optional; Default: 80
+                port: "8082"
+        ##################################################################################
+        #
+        # End of Console GUI Parameters
+        #
+        ##################################################################################
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ocadm-cnsbc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

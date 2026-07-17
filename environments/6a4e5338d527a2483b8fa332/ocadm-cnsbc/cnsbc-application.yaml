@@ -1,0 +1,1508 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnsbc-application
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
+    chart: cnsbc-application
+    targetRevision: "25.1.1"
+    helm:
+      releaseName: ocadm-cnsbc
+      values: |
+        # YAML consisting of parameters used to deploy the Cloud Native SBC application helm chart
+
+        ##################################################################################
+        #
+        # Start of Global Parameters
+        #
+        ##################################################################################
+
+        global:
+          # imageRegistry from where the image should be pulled
+          # Required;
+          imageRegistry: &imgRegRef "image-registry.openshift-image-registry.svc:5000"
+          # imagePullSecrets provides support pulling images from private registries
+          # Optional;
+          # Impact: Not providing secrets may cause image pull failures while deploying pods
+          # The value references one or more secrets to be used when pulling images.
+          # Secrets must be manually created in the target namespace.
+          # ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+          # imagePullSecrets
+          # - name: secretname1
+          # - name: secretname2
+          imagePullSecrets: []
+          # namePrefix is used to form resource name as: namePrefix/Release-name + chart-name + custom-resource-name
+          # Optional;
+          # If it is empty then Helm release-name will be taken as a prefix
+          namePrefix: ""
+          # serviceNetworks subnets used for SIP (sip-interface config element) and RTP (steering-pool)
+          # Required;
+          # serviceNetworks:
+          #   - name: "network0"
+          #     cidr: "10.0.1.1/24"
+          #     gatewayip: "10.0.1.1"
+          #     mtu: 1500
+          #   - name: "network1"
+          #     cidr: "10.0.2.2/24"
+          #     gatewayip: "10.0.2.2"
+          #     mtu: 1500
+          serviceNetworks:
+            - name: "cnsbc_net"
+              cidr: "11.0.2.0/24"
+              gatewayip: "11.0.2.1"
+              mtu: 1500
+          trace:
+            # serviceName name of the service that can be configured to reach tracing service
+            # Optional; Allowed-values: FQDN, FQDN:Port, IP, IP:Port
+            # Default port is 4318
+            serviceName: ""
+            # clientType type of content that the tracing server support
+            # Optional; Allowed-values: http/protobuf", "http/json"; Default: http/protobuf
+            clientType: "http/protobuf"
+          # securityContext defines access control settings for the all the pods
+          # deployed as part of this Helm charts
+          # Mandatory
+          securityContext:
+            # runAsUser for the pod
+            # Optional; Default: 10000
+            runAsUser: 10000
+            # runAsGroup for the pod
+            # Optional; Default: 20000
+            runAsGroup: 20000
+            # fsGroup for the pod
+            # Mandatory;
+            # fsGroup configuration is dependent on the squashing setting of nfs server
+            # Refer the below table as an example -
+            #---------------------------------------------#
+            #    squashing     | anongid |    fsGroup     |
+            #---------------------------------------------#
+            #                  |  20000  |     20000      |
+            #  root_squashing  |---------|----------------#
+            #                  | Not Set |  65534(nobody) |
+            #---------------------------------------------#
+            #                  |  20000  |     20000      |
+            #   all_squashing  |---------|----------------#
+            #                  | Not Set |  65534(nobody) |
+            #---------------------------------------------#
+            #                  |  20000  |   Any value    |
+            # no_root_squshing |---------| allowed by the |
+            #                  | Not Set |     setup      |
+            #---------------------------------------------#
+            #
+            fsGroup: 1000760000
+            # fsGroupChangePolicy defines behavior for changing ownership and permission of the 
+            # volume before being exposed inside a Pod
+            fsGroupChangePolicy: "OnRootMismatch"
+            # supplementalGroups control which supplemental group ID can be assigned to processes in a pod.
+            # Optional;
+            # A list of groups specified here will be applied to the first process run in each container, 
+            # in addition to the container's primary GID set above
+            # This might be useful in certain cases where shared volume(nfs share) groupId is different
+            # from the value as specified under "groupId" field
+            supplementalGroups: []
+          # enableTranscoding setting this flag to true will enable transcoding resource deployment
+          # Optional; Allowed-values: true, false ; Default: false
+          # Impact: setting to false will not deploy transcoding resources. So transcoding functionality will not work
+          enableTranscoding: false
+          # enableRemoteSync setting this flag to true will enable the microservice to access configuration data from 
+          # & write troubleshooting data to local ephemeral storage which will be synced to the remote storage using rsync
+          # Optional; Allowed-values: true, false ; Default: false
+          # NOTE: This feature needs to be enabled when NFS storageClass PVCs are used 
+          # for storing persistent data like configuration & troubleshooting data.
+          enableRemoteSync: false
+          # persistentVolumeClaim persistent storage management for cnsbc application
+          persistentVolumeClaim:
+            # configuration will store the data for rbt,lrt,ca-certs and licenses
+            # cnsbc-media, cnsbc-signaling, cnsbc-transcode, cnsbc-file-manager,cnsbc-configuration-manager sub charts will use this PVC
+            configFiles:
+              # storageClassName is the name of the storageClass provisioned in the cluster that support ReadWriteMany access mode
+              # Required;
+              storageClassName: "rook-cephfs"
+              resources:
+                requests:
+                  # storage is the size of the persistentVolumeClaim required for storing rbt,lrt,ca-certs and licenses data
+                  # Optional; Default: "1G";
+                  storage: "1G"
+            # troubleshooting will store the data for troubleshoot including packet and protocol trace, and crash logs
+            # cnsbc-media, cnsbc-signaling, cnsbc-transcode, cnsbc-file-manager sub charts will use this PVC
+            troubleshooting:
+              # storageClassName is the name of the storageClass provisioned in the cluster that support ReadWriteMany access mode
+              # Required;
+              storageClassName: "rook-cephfs"
+              resources:
+                requests:
+                  # storage is the size of the persistentVolumeClaim required for storing troubleshooting data
+                  # Optional; Default: "1G";
+                  storage: "1G"
+                  # ephemeralVolumes temporary storage management for cnsbc application
+          ephemeralVolumes:
+            # emptyDirs is a type of ephemeral storage that provides a empty directory within a pod for temporary data storage
+            emptyDirs:
+              # localStorage will store the local copy of configuration data (rbt,lrt,ca-certs and licenses) & troubleshooting data (packet and protocol trace, and crash logs)
+              # cnsbc-media, cnsbc-signaling, cnsbc-transcode sub charts will use this volume
+              localStorage:
+                # sizeLimit is the total amount of storage required for storing local copy of configuration and troubleshooting data
+                # Optional; Default: "2G";
+                sizeLimit: "2G"
+              # localConfig will store the local copy of micro service specific configuration SE/ME/TE
+              # cnsbc-media, cnsbc-signaling, cnsbc-transcode sub charts will use this volume
+              localConfig:
+                # sizeLimit is the total amount of storage required for storing local copy of configuration backup
+                # Optional; Default: "1G";
+                sizeLimit: "1G"
+          # Start of global level bootstrap sub section - Applicable to signaling and media
+          bootstrap:
+            # desiredActiveMediaEngines defines number of active media engines in a cluster
+            # Optional; Default: 1;
+            # Follow sizing guidelines provided by Oracle to set the right values for these parameters
+            desiredActiveMediaEngines: 1
+            # desiredStandbyMediaEngines defines number of standby media engines in a cluster
+            # Optional; Default: 1;
+            # Follow sizing guidelines provided by Oracle to set the right values for these parameters
+            desiredStandbyMediaEngines: 1
+            # desiredActiveTranscodeEngines defines number of active transcode engines in a cluster
+            # Optional; Default: 1;
+            # Follow sizing guidelines provided by Oracle to set the right values for these parameters
+            desiredActiveTranscodeEngines: 1
+            # desiredStandbyTranscodeEngines defines number of standby transcode engines in a cluster
+            # Optional; Default: 1;
+            # Follow sizing guidelines provided by Oracle to set the right values for these parameters
+            desiredStandbyTranscodeEngines: 1
+          # End of global level bootstrap sub section - Applicable to signaling and media
+
+          # enableMetricsAllowList When set to true, only the metrics listed in metrics-allowlist configmap will be exported
+          # by SE, ME & TE micro services. if set to false, then all the metrics will be exported
+          # Optional; Allowed-Values: true, false; Default: true;
+          # impact: When this flag is set to false, cardinality of metrics that are being exported to prometheus by SE/ME/TE will increase based on configuration
+          enableMetricsAllowList: true
+          # Start of global level tls parameters sub section
+          tls:
+            # certificates contains the list of TLS certificates signed by certificate authority
+            # Optional;
+            # cert-manager adds certificates as resource types in kubernetes cluster
+            certificates: []
+            # Below is an example which shows the mandatory parameters of TLS certificate
+            # certificates:
+            #   - name: tls-certificate-1 #name of the certificate
+            #     #commonName to be used on the certificate
+            #     commonName: tlscertcommon.com
+            #     #organizations list to be used on the certificate
+            #     organizations:
+            #       - Engineering
+            #     #organizationalUnits list to be used on the certificate
+            #     organizationalUnits:
+            #       - CGBU
+            #     #countries list to be used on the Certificate.
+            #     countries:
+            #       - US
+            #     #localities list of Cities to be used on the Certificate.
+            #     localities:
+            #       - MA
+            #     #provinces list of State/Provinces to be used on the Certificate
+            #     provinces:
+            #       - Burlington
+            #     #duration the requested 'duration' (i.e. lifetime) of the Certificate
+            #     #default value 2160h (90 days). Valid time units are "ns","us"(or "µs),"ms","s","m","h".
+            #     duration: 2160h
+            #     #renewBefore time before the currently issued certificate's expiry
+            #     #cert-manager should renew the certificate. default is 2/3 times of duration
+            #     #Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
+            #     renewBefore: 24h
+            #     #At least one of a DNS Name, URI, or IP address is required
+            #     #dnsNames list of DNS subjectAltNames to be set on the Certificate
+            #     dnsNames:
+            #       - tlscertdns.com
+            #     #uris is a list of URI subjectAltNames to be set on the Certificate
+            #     uris:
+            #     #ipAddresses is a list of IP address subjectAltNames to be set on the Certificate
+            #     ipAddresses:
+            #     #emailAddresses list of email subjectAltNames to be set on the certificate.
+            #     emailAddresses:
+            #       - support@engineering.com
+            #     #secretName is the name of the secret in which the signed certificate will be stored.
+            #     #Since this secret will be generated automatically, providing the secret name is required.
+            #     secretName: tls-secret-1
+            #     #issuerRef References a properly configured ACME-type Issuer used to create this challenge
+            #     issuerRef:
+            #       #name of the resource being referred to
+            #       name: root-issuer
+            #       #kind of the resource being referred to. Allowed values are Issuer or clusterIssuer
+            #       kind: Issuer
+            #       #group of the resource being referred to. This is optional since cert-manager will
+            #       #default to this value however if you are using an external issuer, change this to that issuer group.
+            #       group: cert-manager.io
+            #     #usages is the set of x509 usages that are requested for the certificate.
+            #     #Default values are digital signature, server auth and key encipherment
+            #     usages:
+            #       - server auth
+            #       - digital signature
+            #       - key encipherment
+            #     #privateKey options to control private keys used for the certificate.
+            #     privateKey:
+            #       #encoding private key cryptography standards(PKCS) encoding for this certificate's private key
+            #       #to be encoded in. Allowed values are PKCS1 and PKCS8. Default value is PKCS1
+            #       encoding: PKCS1
+            #       #algorithm is the private key algorithm of the corresponding private key for this certificate
+            #       #Allowed values are RSA and ECDSA. Default value is RSA
+            #       algorithm: RSA
+            #       #size is the key bit size of the corresponding private key for this certificate.
+            #       #If algorithm is RSA valid values for size are 2048/4096/8192. Default 2048
+            #       #If algorithm is ECDSA valid values for size are 256/384/521. Default 256
+            #       size: 2048
+          # End of global level tls parameters sub section
+
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          #   Useful if you want to dedicate nodes to just run the cnsbc-signaling
+          #   For example:
+          #   tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add labels to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          # NOTE: if you modify labels it would recreate application pods and may cause service disruption
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          # NOTE: if you modify annotations it would recreate application pods and may cause service disruption
+          annotations: {}
+          # Start of global level initContainer image section
+          initContainer:
+            # Information about the initContainer image
+            image:
+              # registry initContainer image registry
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository initContainer image path
+              # Required;
+              # user need to provide the value of repository , example : reference
+              repository: "cnsbc"
+              # name initContainer image name
+              # Optional; Default: oraclelinux
+              name: "oraclelinux"
+              # tag initContainer image tag
+              # Required;
+              tag: "8-slim"
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
+              pullPolicy: "IfNotPresent"
+          # End of global level initContainer image section
+
+          # Start of global level coherence image reference section
+          coherence:
+            # Information about the coherence image
+            image:
+              # registry is the name of the container registry where the coherence image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the coherence image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: coherence_cpu
+              name: "coherence_cpu"
+              # tag is the version number of the image in the registry
+              # Required;
+              tag: "14.1.2.0.1"
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
+              pullPolicy: "Always"
+            # securityContext defines access control settings for pods deployed as part of sub-chart
+            # Optional; Default: {}
+            securityContext:
+              runAsNonRoot: true
+          # fluentBit container image details
+          fluentBit:
+            # image Information about the fluentBit image
+            image:
+              # registry is the name of the container registry where the fluentBit image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the fluentBit image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: fluent-bit
+              name: "fluent-bit"
+              # tag is the version number of the image in the registry
+              # Required;
+              tag: "4.0.1"
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
+              pullPolicy: "Always"
+          # rsync container image details
+          rsync:
+            # image Information about the rsync image
+            image:
+              # registry is the name of the container registry where the rsync image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the rsync image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: rsync
+              name: "rsync"
+              # tag is the version number of the image in the registry
+              # Required;
+              tag: "25.1.1"
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
+              pullPolicy: "Always"
+        ##################################################################################
+        #
+        # End of Global Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc-signaling Parameters
+        #
+        ##################################################################################
+        cnsbc-signaling:
+          # replicas  Number of signaling engines that will be deployed.
+          # Optional; Allowed-values: 1 or 2 ; Default: 2
+          # 1 - One Active signaling engine 2 - One Active & one Standby signaling engine
+          replicas: 2
+          # signaling Information about the signaling engine image
+          signaling:
+            # image Information about the signaling engine image
+            image:
+              # registry is the name of the container registry where the signaling image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the cnsbc-signaling image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: cnsbc-signaling
+              name: "cnsbc-signaling"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: "25.1.1"
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
+              pullPolicy: "Always"
+            # resources is the maximum resources we can allocate to the cnsbc-signaling container
+            # Optional;
+            # cpu limit will be derived from cores configured (signaling+forwarding+1(dos))
+            # resources:
+            #   limits:
+            #     memory: "4Gi"
+            #     hugepages-2Mi: "2Gi"
+            resources:
+              limits:
+                memory: "4Gi"
+                hugepages-2Mi: "2Gi"
+            # vnics to be added to the signaling container
+            # Required;
+            # VIPs must be configured for vnic type 'pv/Normal'
+            # VIPs configuration is optional for vnic type 'vf/Direct'
+            #  vnics:
+            #     - name: net0
+            #       network-name: access-nw
+            #       vips: ["10.1.8.160"]
+            #       secgroup: ["f136d7df-dade-4100-bf50-6ddf0f568be5"]
+            #     - name: net1
+            #       network-name: core-nw
+            #       vips: ["10.2.8.160"]
+            #       secgroup: ["f136d7df-dade-4100-bf50-6ddf0f568be5"]
+            vnics:
+              - name: "net0"
+                network-name: "cnsbc_net"
+                vips: ["11.0.2.10"]
+            # log defines the log level for processes/tasks in signaling engine
+            log:
+              # level allows to configure task/process wide logging information
+              # Optional; Allowed-values: Fatal, Error, Warn, Info, Debug, trace; Default: Info
+              level:
+                usbc-proc: "Info"
+                usdp-proc: "Info"
+          # start of bootstrap section for signaling
+          bootstrap:
+            # forwardCores number of cores allocated for media processing
+            # Optional; Default: 1
+            forwardCores: 1
+            # signalingCores number of cores allocated for signaling process
+            # Optional; Default: 1
+            signalingCores: 1
+          # End of bootstrap section for signaling
+
+          # start of signaling database section
+          signalingDatabase:
+            # replicas number of signaling database pods that will be deployed
+            # Optional; Default: 3
+            replicas: 3
+            # resources for signaling database pods
+            # Optional;
+            # resources:
+            #   limits:
+            #     memory: "1Gi"
+            #     cpu: 1
+            resources:
+              limits:
+                memory: "1Gi"
+                cpu: 1
+            # jvm heap memory for signaling database pods
+            # when Heap memory of the signalingDatabase cluster need to be allocated
+            # manually with a certain value, else Operator will
+            # allocate the twenty-five percent of signalingDatabase pod memory as
+            # pod heap memory during signalingDatabase cluster deployment
+            # Optional;
+            jvm:
+              memory:
+                heapSize: ""
+          # End of signaling database section
+
+          # start of CDR(call detail records) section
+          accounting:
+            # enabled if set, CDR(call detail records) will be generated and cdrManager will be deployed
+            # Optional; Allowed Values: true, false; Default: false;
+            enabled: false
+          # cdrManager is deployed as a sidecar container along with signaling container
+          # dependencies: cdrManager will be deployed only if accounting is enabled
+          cdrManager:
+            # cdr-manager image
+            image:
+              # registry is the name of the container registry where the xfer-service image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the xfer-service image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: xfer-service
+              name: "xfer-service"
+              # tag is the version number of the image in the registry
+              # Required when accounting is enabled
+              tag: "25.1.1"
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # resources for cdr-manager container
+            # Optional;
+            # resources:
+            #   limits:
+            #     memory: "256Mi"
+            #     cpu: "500m"
+            resources:
+              limits:
+                memory: "256Mi"
+                cpu: "500m"
+            # persistentVolumeClaim will store the data for CDR
+            persistentVolumeClaim:
+              # storageClassName is the name of the storageClass provisioned in the cluster that support ReadWriteOnce access mode. It must be based on block storage.
+              # Required;
+              storageClassName: "rook-cephfs"
+              resources:
+                requests:
+                  # storage is the size of the persistentVolumeClaim required for storing CDR data
+                  # Optional; Default: "1G";
+                  storage: "1G"
+            # start of file transfer service parameters for cdr-manager container
+            sftp:
+              server:
+                # secretName specify the name of the secret.
+                # This secret will be utilized to retrieve the remote SFTP Server credentials.
+                # The secret must include "username" and "password" fields, representing the SFTP Server Username and SFTP Server Password.
+                # Required, if accounting is enabled
+                secretName: ""
+                # serviceName takes SFTP server's FQDN or service name as input, which will be the target server for file transmission using SFTP
+                # dependencies: if serviceName is not specified, ipAddresses below is required.
+                # Required, if accounting is enabled
+                serviceName: ""
+                # ipAddresses is the list of IPs which will be the recipient for the SFTP file transmission
+                # Optional, if serviceName is configured
+                # Provide the list of IPs of remote SFTP server to which file needs to be transferred. Example -->
+                # ipAddresses:
+                #   - ip: 10.233.61.47
+                #   - ip: 10.233.26.5
+                ipAddresses: []
+                # port is the port of the sftp service
+                # Optional; Default: 22
+                port: 22
+                # remotePath is the SFTP server's directory path, where the files will be transferred.
+                # Optional; Default: "cnsbc_sftp/cdr"
+                remotePath: "cnsbc_sftp/cdr"
+                # knownhosts is the knownhost information of the sftp server, which will be used to validate that
+                # file is getting transferred to trusted server.
+                # To get knownhosts data use command: ssh-keyscan example-sftp-server.com  or ssh-keyscan 10.1.1.15
+                # Reference: https://man.openbsd.org/ssh-keyscan  https://en.wikibooks.org/wiki/OpenSSH/Client_Configuration_Files#About_the_Contents_of_the_known_hosts_Files
+                # For example:
+                #   When single value in knownhost
+                #   knownhosts: "10.1.1.15:22 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCvj9ZXbpJM0OPsZufjGzF6qtIuIsG3xFIKsPgHdUZROhlgyi"
+                #   When multiple values in knownhost, separate them with \n (new line character)
+                #   knownhosts: "10.1.1.15:22 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCvj9ZXbpJM0OPsZufjGzF6qtIuIsG3xFIKsPgHdUZROhlgyi
+                #                \n10.1.1.15:22 ssh-rsa AAAAB3NzaC1yc2EAAAADAQDKLJEFEgQCvj9ZXbpJM0OPsZufjGzF6qtIuIsG3xFIKkjskjdMSNsyi"
+                # Required, if accounting is enabled
+                knownhosts: ""
+              client:
+                # destinationFilePrefix is a prefix appended to the file name that get transmitted
+                # Optional; Default: ""
+                destinationFilePrefix: ""
+                # numberThreads is number of worker threads to run the SFTP operations
+                # Optional; Default: "2"
+                numberThreads: 2
+                # compressOnTransit defines the files that needs to be transferred should be compressed or not
+                # Optional; Allowed-Values: true, false;  Default: true
+                # true - gzip compression; false - no compression
+                compressOnTransit: true
+                # totalDiskSpaceInKBs total usable disk space in kilobytes.
+                # Optional; Default: 1000000
+                totalDiskSpaceInKBs: 1000000
+                # End of file transfer service parameters for cdr-manager container
+          # serviceAccount is the service account to create and assign RBAC roles to
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Required if create is false
+            # Behavior:
+            #   1. If create = true and name is empty: a new service account is created with a generated name
+            #   2. If create = true and name is set: a new service account is created with this name
+            #   3. If create = false and name is set: the existing service account with this name will be used
+            #   4. If create = false and name is empty: this config is invalid, expect a failure
+            #
+            # NOTE:
+            #   If using an existing service account (i.e., create is set to false), it must have the following permissions:
+            #     - resource: secrets, verbs: [get, list]
+            #     - resource: podsecuritypolicies, verbs: [use]
+            #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
+            name: ""
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          # runAsUser and runAsGroup is not configurable for the main pod, instead provided fields will
+          # be configured only for the init-container
+          # fsGroup configured here will not be prioritized for this pod instead global.securityContext.fsGroup 
+          # will be prioritized
+          securityContext: {}
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # if set, only following nodeSelector is applied and global nodeSelector ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # if set, only following affinity is applied and global affinity ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # if set, both following tolerations and global tolerations applied
+          # Useful if you want to dedicate nodes to just run the cnsbc-signaling
+          #   For example:
+          #   tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add labels to all the resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # if set, both following annotations and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of cnsbc-signaling Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc-media Parameters
+        #
+        ##################################################################################
+        cnsbc-media:
+          # media Information about the media engine
+          media:
+            # image Information about the media engine image
+            image:
+              # registry is the name of the container registry where the media image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the cnsbc-media image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: cnsbc-media
+              name: "cnsbc-media"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # resources is the maximum resources we can allocate to the cnsbc-media container
+            # Optional;
+            # cpu limit will be derived from cores configured (signaling+forwarding)
+            # resources:
+            #   limits:
+            #     memory: "4Gi"
+            #     hugepages-2Mi: "2Gi"
+            resources:
+              limits:
+                memory: "4Gi"
+                hugepages-2Mi: "2Gi"
+            # vnics to be added to the media
+            # Required;
+            # VIPs must be configured for vnic type 'pv/Normal'
+            # VIPs configuration is optional for vnic type 'vf/Direct'
+            # Multiple vnics can be added in the form of an array with fields configured like this:
+            #
+            # vnics:
+            #   - name: <any-user-defined-name>
+            #     network-name: <name of the network created>
+            #     vips: ["ip1", "ip2"]
+            #     secgroup: ["security-group-id1", "security-group-id2"]
+            #
+            # Example: For HA
+            # vnics:
+            # - name: net0 
+            #   network-name: access-halo
+            #   vips: ["10.1.8.72", "10.1.8.74"]
+            #   secgroup: ["f136d7df-dade-4100-bf50-6ddf0f568be5"]
+            # - name: net1 
+            #   network-name: core-halo
+            #   vips: ["10.2.8.72", "10.2.8.74"]
+            #   secgroup: ["f136d7df-dade-4100-bf50-6ddf0f568be5"]
+            #
+            vnics:
+              - name: "net0"
+                network-name: "cnsbc_net"
+                vips: ["11.0.2.11"]
+            # log defines the log level for processes/tasks in media engine
+            log:
+              # level allows to configure task/process wide logging information
+              # Optional; Allowed-values: Fatal, Error, Warn, Info, Debug, trace; Default: Info
+              level:
+                usbc-proc: "Info"
+                usdp-proc: "Info"
+          # start of bootstrap section for media
+          bootstrap:
+            # forwardCores number of cores allocated for media processing
+            # Optional; Default: 1
+            forwardCores: 1
+            # signalingCores number of cores allocated for signaling process
+            # Optional; Default: 1
+            signalingCores: 1
+          # End of bootstrap section for media
+
+          # start of media database section
+          mediaDatabase:
+            # replicas number of media database pods that will be deployed
+            # Optional; Default: 3
+            replicas: 3
+            # resources for media database pods
+            # Optional;
+            # resources:
+            #   limits:
+            #     memory: "1Gi"
+            #     cpu: 1
+            resources:
+              limits:
+                memory: "1Gi"
+                cpu: 1
+            # jvm heap memory for media database pods
+            # when Heap memory of the mediaDatabase cluster need to be allocated
+            # manually with a certain value, else Operator will
+            # allocate the twenty-five percent of mediaDatabase pod memory as
+            # pod heap memory during mediaDatabase cluster deployment
+            # Optional;
+            jvm:
+              memory:
+                heapSize: ""
+          # End of media database section
+
+          # serviceAccount is the service account to create and assign RBAC roles to
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Required if create is false
+            # Behavior:
+            #   1. If create = true and name is empty: a new service account is created with a generated name
+            #   2. If create = true and name is set: a new service account is created with this name
+            #   3. If create = false and name is set: the existing service account with this name will be used
+            #   4. If create = false and name is empty: this config is invalid, expect a failure
+            #
+            # NOTE:
+            #   If using an existing service account (i.e., create is set to false), it must have the following permissions:
+            #     - resource: secrets, verbs: [get, list]
+            #     - resource: podsecuritypolicies, verbs: [use]
+            #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
+            name: ""
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          # runAsUser and runAsGroup is not configurable for the main pod, instead provided fields will
+          # be configured only for the init-container.
+          # fsGroup configured here will not be prioritized for this pod instead global.securityContext.fsGroup 
+          # will be prioritized.
+          securityContext: {}
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # if set, only following nodeSelector is applied and global nodeSelector ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # This value affects both mediaDatabase and media pods
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # if set, only following affinity is applied and global affinity ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          # This value affects both mediaDatabase and media pods
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # if set, both following tolerations and global tolerations applied
+          # Useful if you want to dedicate nodes to just run the cnsbc-media
+          # For example:
+          # tolerations:
+          # - key: "key"
+          #   operator: "Equal"
+          #   value: "value"
+          #   effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          # This value affects both mediaDatabase and media pods
+          tolerations: []
+          # labels add extra labels to all the resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of cnsbc-media Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc transcode controller Parameters
+        #
+        ##################################################################################
+        cnsbc-transcode-controller:
+          # transcodeController Information
+          transcodeController:
+            # image Information about the transcode controller image
+            image:
+              # registry is the name of the container registry where the transcode controller is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the transcode-controller image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: transcode-controller
+              name: "transcode-controller"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # replicas number of transcode-controller replicas to be deployed  
+            # Optional; Allowed-Values: Any odd number; Default: 3.
+            # The replica count should be in odd numbers
+            replicas: 3
+            # resources is the maximum resources we can allocate to the transcode-controller container
+            # Optional;
+            # resources:
+            #   limits:
+            #     memory: "2Gi"
+            #     cpu: 2
+            resources:
+              limits:
+                memory: "2Gi"
+                cpu: 2
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # if set, only following nodeSelector is applied and global nodeSelector ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # if set, only following affinity is applied and global affinity ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # if set, both following tolerations and global tolerations applied
+          # Useful if you want to dedicate nodes to just run the cnsbc-transcode
+          # For example:
+          # tolerations:
+          # - key: "key"
+          #   operator: "Equal"
+          #   value: "value"
+          #   effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add extra labels to all the resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          securityContext:
+            runAsNonRoot: true
+        ##################################################################################
+        #
+        # End of cnsbc transcode controller Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc-transcode Parameters
+        #
+        ##################################################################################
+        cnsbc-transcode:
+          # transcode Information about the transcode engine
+          transcode:
+            # image Information about the transcode engine image
+            image:
+              # registry is the name of the container registry where the transcode image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the cnsbc-transcode image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: cnsbc-media
+              name: "cnsbc-media"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # resources is the maximum resources we can allocate to the cnsbc-transcode container
+            # Optional;
+            # cpu limit will be derived from cores configured (signaling+forwarding+xcore)
+            # resources:
+            #   limits:
+            #     memory: "4Gi"
+            #     hugepages-2Mi: "2Gi"
+            resources:
+              limits:
+                memory: "4Gi"
+                hugepages-2Mi: "2Gi"
+            # vnics to be added to the transcode
+            # Required;
+            # VIPs must be configured for vnic type 'pv/Normal'
+            # VIPs configuration is optional for vnic type 'vf/Direct'
+            # Multiple vnics can be added in the form of an array with fields configured like this:
+            #
+            # vnics:
+            #   - name: <any-user-defined-name>
+            #     network-name: <name of the network created>
+            #     vips: ["ip1", "ip2"]
+            #     secgroup: ["security-group-id1", "security-group-id2"]
+            #
+            # Example: For HA
+            # vnics:
+            # - name: net0 
+            #   network-name: access-halo
+            #   vips: ["10.1.8.72", "10.1.8.74"]
+            #   secgroup: ["f136d7df-dade-4100-bf50-6ddf0f568be5"]
+            # - name: net1 
+            #   network-name: core-halo
+            #   vips: ["10.2.8.72", "10.2.8.74"]
+            #   secgroup: ["f136d7df-dade-4100-bf50-6ddf0f568be5"]
+            #
+            vnics:
+              - name: "net0"
+                network-name: "cnsbc_net"
+                vips: ["11.0.2.12"]
+            # log defines the log level for processes/tasks in transcode engine
+            log:
+              # level allows to configure task/process wide logging information
+              # Optional; Allowed-values: Fatal, Error, Warn, Info, Debug, trace; Default: Info
+              level:
+                usbc-proc: "Info"
+                usdp-proc: "Info"
+          # start of bootstrap section for transcode
+          bootstrap:
+            # forwardCores number of cores allocated for media processing
+            # Optional; Default: 1
+            forwardCores: 1
+            # signalingCores number of cores allocated for signaling process
+            # Optional; Default: 1
+            signalingCores: 1
+            # xCores number of cores allocated for transcoding
+            # Optional; Default: 1
+            xCores: 1
+          # End of bootstrap section for media
+
+          # start of transcoding database section
+          transcodingDatabase:
+            # replicas number of transcoding database pods that will be deployed
+            # Optional; Default: 3
+            replicas: 3
+            # resources for transcode database pods
+            # Optional;
+            # resources:
+            #   limits:
+            #     memory: "1Gi"
+            #     cpu: 1
+            resources:
+              limits:
+                memory: "1Gi"
+                cpu: 1
+            # jvm heap memory for transcode database pods
+            # when Heap memory of the transcodingDatabase cluster need to be allocated
+            # manually with a certain value, else Operator will
+            # allocate the twenty-five percent of transcodingDatabase pod memory as
+            # pod heap memory during transcodingDatabase cluster deployment
+            # Optional;
+            jvm:
+              memory:
+                heapSize: ""
+          # End of transcode database section
+
+          # serviceAccount is the service account to create and assign RBAC roles to
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Required if create is false
+            # Behavior:
+            #   1. If create = true and name is empty: a new service account is created with a generated name
+            #   2. If create = true and name is set: a new service account is created with this name
+            #   3. If create = false and name is set: the existing service account with this name will be used
+            #   4. If create = false and name is empty: this config is invalid, expect a failure
+            #
+            # NOTE:
+            #   If using an existing service account (i.e., create is set to false), it must have the following permissions:
+            #     - resource: podsecuritypolicies, verbs: [use]
+            #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
+            name: ""
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          # runAsUser and runAsGroup is not configurable for the main pod, instead provided fields will
+          # be configured only for the init-container.
+          # fsGroup configured here will not be prioritized for this pod instead global.securityContext.fsGroup 
+          # will be prioritized.
+          securityContext: {}
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # if set, only following nodeSelector is applied and global nodeSelector ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # This value affects both transcodingDatabase and transcode pods
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # if set, only following affinity is applied and global affinity ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          # This value affects both transcodingDatabase and transcode pods
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # if set, both following tolerations and global tolerations applied
+          # Useful if you want to dedicate nodes to just run the cnsbc-transcode
+          # For example:
+          # tolerations:
+          # - key: "key"
+          #   operator: "Equal"
+          #   value: "value"
+          #   effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          # This value affects both transcodingDatabase and transcode pods
+          tolerations: []
+          # labels add extra labels to all the resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of cnsbc-transcode Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of HA service manager Parameters
+        #
+        ##################################################################################
+        cnsbc-ha-service-manager:
+          # haServiceManager Information about the HA service manager
+          haServiceManager:
+            # image Information about the HA service manager image
+            image:
+              # registry is the name of the container registry where the HA service manager image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the HA service manager image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: ha-service-manager
+              name: "ha-service-manager"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # replicas indicate number of ha-service-manager pods to be deployed 
+            # Optional; Default: 2
+            replicas: 2
+          # serviceAccount is the service account to create and assign RBAC roles to
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Required if create is false
+            # Behavior:
+            #   1. If create = true and name is empty: a new service account is created with a generated name
+            #   2. If create = true and name is set: a new service account is created with this name
+            #   3. If create = false and name is set: the existing service account with this name will be used
+            #   4. If create = false and name is empty: this config is invalid, expect a failure
+            #
+            # NOTE:
+            #   If using an existing service account (i.e., create is set to false), it must have the following permissions:
+            #     - resource: services, verbs: [get, list, patch, create]
+            #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
+            name: ""
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          securityContext:
+            runAsNonRoot: true
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # if set, only following nodeSelector is applied and global nodeSelector ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # if set, only following affinity is applied and global affinity ignored
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # if set, both following tolerations and global tolerations applied
+          # Useful if you want to dedicate nodes to just run the cnsbc-media
+          # For example:
+          # tolerations:
+          # - key: "key"
+          #   operator: "Equal"
+          #   value: "value"
+          #   effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add extra labels to all the resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of HA service manager Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc configuration manager Parameters
+        #
+        ##################################################################################
+        cnsbc-configuration-manager:
+          # configManager Information about the configuration manager
+          configManager:
+            # image Information about the configuration manager image
+            image:
+              # registry is the name of the container registry where the configuration manager image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the configuration manager image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: configuration-manager
+              name: "configuration-manager"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # resources for cnsbc-configuration-manager container
+            # Optional; Default: Small Configuration values
+            # CPU and memory configuration recommendation details.
+            # Type                     No of Config Elements      Resource Configuration
+            # Small Configuration          <8k                    (500m -1000m) CPU (512Mi - 1Gi) memory
+            # Medium Configuration       8k - 80k                 (1000m - 2000m) CPU (512Mi - 3Gi) memory
+            # Large Configuration       40k - 80k                 (1500m -4000m) CPU (512Mi - 5Gi) memory
+            resources:
+              limits:
+                memory: "1Gi"
+                cpu: 1
+              requests:
+                memory: "512Mi"
+                cpu: "500m"
+            persistentVolumeClaim:
+              # storageClassName is the name of the storageClass provisioned in the cluster that support ReadWriteOnce access mode
+              # Required;
+              storageClassName: "rook-cephfs"
+              resources:
+                requests:
+                  # storage is the size of the persistentVolumeClaim required for storing configuration data
+                  # Optional; Default: "5Gi";
+                  storage: "5Gi"
+            # replicas Number of cnsbc-configuration-manager replicas to be deployed
+            # Optional; Default: 3
+            replicas: 3
+            # env environment variables
+            # Optional;
+            # ref: https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
+            env: []
+            # primaryPasswordSecretName User needs to ensure a secret is created before deploying cnsbc application.
+            # Required;
+            # impact: If secret does not configured deployment will fail to deploy.
+            # Provide the name of the secret. It will be used to get the primary password.
+            # The password provided in this secret will be used to encrypt the password type attributes of config element
+            primaryPasswordSecretName: "primary-password"
+          # serviceAccount is the service account to create and assign RBAC roles to
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Required if create is false
+            # Behavior:
+            #   1. If create = true and name is empty: a new service account is created with a generated name
+            #   2. If create = true and name is set: a new service account is created with this name
+            #   3. If create = false and name is set: the existing service account with this name will be used
+            #   4. If create = false and name is empty: this config is invalid, expect a failure
+            #
+            # NOTE:
+            #   If using an existing service account (i.e., create is set to false), it must have the following permissions:
+            #     - resource: secrets, verbs: [get, list]
+            #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
+            name: ""
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # fsGroup configured here will not be prioritized for this pod instead global.securityContext.fsGroup 
+          # will be prioritized
+          # Optional; Default: {}
+          securityContext:
+            runAsNonRoot: true
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          #   Useful if you want to dedicate nodes to just run the cnsbc-signaling
+          #   For example:
+          #   tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add labels to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of cnsbc configuration manager Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of file service manager Parameters
+        #
+        ##################################################################################
+        cnsbc-file-manager:
+          # fileManager Information about the file service manager
+          fileManager:
+            # image Information about the file service manager image
+            image:
+              # registry is the name of the container registry where the file service manager image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the file service manager image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: file-service
+              name: "file-service"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          #   Useful if you want to dedicate nodes to just run the cnsbc-file-service
+          #   For example:
+          #   tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add labels to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # fsGroup configured here will not be prioritized for this pod instead global.securityContext.fsGroup 
+          # will be prioritized
+          # Optional; Default: {}
+          securityContext:
+            runAsNonRoot: true
+        ##################################################################################
+        #
+        # End of file service manager Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc cli proxy Parameters
+        #
+        ##################################################################################
+        cnsbc-cli-proxy:
+          # cliProxy Information about the cnsbc cli proxy
+          cliProxy:
+            # image Information about the cli proxy image
+            image:
+              # registry is the name of the container registry where the cli proxy image is available
+              # Required;
+              registry: image-registry.openshift-image-registry.svc:5000
+              # repository is the path/folder structure where the cli proxy image is available with in the registry
+              # Required;
+              repository: "cnsbc"
+              # name is the name of the image in registry
+              # Optional; Default: cli-proxy
+              name: "cli-proxy"
+              # tag is the version number of the image in the registry
+              # Optional;
+              tag: ""
+              # pullPolicy specify a imagePullPolicy
+              # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          #   Useful if you want to dedicate nodes to just run the cnsbc-cli-proxy
+          #   For example:
+          #   tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add labels to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the resources
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          securityContext:
+            runAsNonRoot: true
+        ##################################################################################
+        #
+        # End of cnsbc cli proxy Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of helm test sub section
+        #
+        ##################################################################################
+        helmTest:
+          # serviceAccountHelmTest is the service account used by helm to run helm test
+          # User can specify an already created SA, by setting create to false
+          # A new SA will be created with name <release-name>-helm-test-serviceaccount
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name of the service account to use.
+            # Required if create is false
+            # Behavior:
+            #   1. If create = true and name is empty: a new service account is created with a generated name
+            #   2. If create = true and name is set: a new service account is created with this name
+            #   3. If create = false and name is set: the existing service account with this name will be used
+            #   4. If create = false and name is empty: this config is invalid, expect a failure
+            #
+            # NOTE:
+            #   If using an existing service account (i.e., create is set to false), it must have the following permissions:
+            #     - resource: pods, verbs: [list]
+            #     - resource: persistentvolumeclaims, verbs: [list]
+            #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
+            name: ""
+          # securityContext defines access control settings for pods deployed as part of sub-chart
+          # Optional; Default: {}
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+          # Timeout duration of the readiness checks, Value should be defined in seconds
+          # Optional; Default: 300
+          timeout: "300"
+          # resources configures the maximum resources we can allocate to the helm test
+          # Ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+          resources:
+            requests:
+              # memory
+              # Optional; Default: "1Gi";
+              memory: "1Gi"
+              # cpu
+              # Optional; Default: "300m";
+              cpu: "300m"
+            limits:
+              # memory
+              # Optional; Default: "1Gi";
+              memory: "1Gi"
+              # cpu
+              # Optional; Default: "500m";
+              cpu: "500m"
+          # Information about the Helm test image
+          image:
+            # registry is the name of the container registry where the helm test image is available
+            # Required;
+            registry: image-registry.openshift-image-registry.svc:5000
+            # repository is the path/folder structure where the helm test image is available with in the registry
+            # Required;
+            repository: "cnsbc"
+            # name is the name of the image in registry
+            # Optional; Default: helm-test
+            name: "helm-test"
+            # tag is the version number of the image in the registry
+            # Required;
+            tag: "25.1.1"
+            # pullPolicy specify a imagePullPolicy
+            # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
+            pullPolicy: "Always"
+        ##################################################################################
+        #
+        # End of helm test sub section
+        #
+        ##################################################################################
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ocadm-cnsbc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

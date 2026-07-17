@@ -1,0 +1,597 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnsbc-operator
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
+    chart: cnsbc-operator
+    targetRevision: "25.1.1"
+    helm:
+      releaseName: ocadm-cnsbc-operator
+      values: |
+        # Default values YAML file for Cloud Native SBC Operator helm chart
+        # Declare variables to be passed into Cloud Native SBC Operator helm templates
+
+        ##################################################################################
+        #
+        # Start of Global Parameters
+        #
+        ##################################################################################
+
+        global:
+          # imageRegistry from where the image should be pulled
+          # Required;
+          imageRegistry: &imgRegRef "image-registry.openshift-image-registry.svc:5000"
+          # repositoryPrefix is the repository where the image is stored
+          # Optional
+          repositoryPrefix: "cnsbc"
+          # imagePullSecrets provides support for pulling images from private registries
+          # Optional;
+          # This field references one or more secrets that will be used for image retrieval
+          # Secrets must be manually created in the target namespace
+          # ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+          # Example:
+          #   For example, adding the pull secret "foo" would be:
+          #
+          #   imagePullSecrets:
+          #   - name: "foo"
+          #
+          #   adding multiple pull secrets "foo" and "bar" would be
+          #
+          #   imagePullSecrets:
+          #   - name: "foo"
+          #   - name: "bar"
+          imagePullSecrets: []
+          # namePrefix is used to form the resource name in the format: 
+          # namePrefix/release-name + chart-name + custom-resource-name
+          # Optional: If left empty, the Helm release-name will be used as the prefix
+          namePrefix: ""
+          # labels add additional labels to all resources within both the CNSBC Application and CNSBC Vnicset operators
+          # Optional
+          # Reference: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add additional annotations to all resources within both the CNSBC Application and CNSBC Vnicset operators
+          # Optional
+          # Reference: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+          # watchNamespaces defines the comma-separated list of namespaces 
+          # that the operators will manage for `cnsbcapp` and `cnsbcvnicset` custom resources
+          # Optional; Allowed Values: A comma-separated list of namespace names; Default: ""
+          # (an empty string), which indicates that the operator will manage all namespaces
+          # Impact: If set, the operator's scope is restricted to the specified namespaces only
+          # Example:
+          # watchNamespaces: "NS1,NS2"
+          watchNamespaces: "ocadm-cnsbc"
+          # cloud contains cloud-specific metadata
+          cloud:
+            # type specifies the type of cloud environment
+            # Optional; Allowed Value: "openstack"; Default: "openstack"
+            type: "openstack"
+            # metadata contains details necessary for connecting to the cloud environment
+            # cloud provider details can be found from openstack openrc file
+            metadata:
+              # authUrl is the authentication URL for the cloud service
+              # Required;
+              # Example:
+              # authUrl: "http://burling-devtest-cloud-ctrl.us.oracle.com:5000/v3"
+              authUrl: "http://10.133.97.20:5000"
+              # domainName is the domain name used for authentication
+              # Required;
+              # Example: 
+              # domainName: "LDAP"
+              domainName: "Default"
+              # projectID is the unique identifier for the cloud project
+              # Required;
+              # Example: 
+              # projectID: "b06b25586f544629a90fa943c1b0f51b"
+              projectID: "8f27e7b2f6d548ca94c95c1c98b76e8b"
+              # projectName is the name of the cloud project
+              # Required;
+              # Example: 
+              # projectName: "Nova"
+              projectName: "network-demos"
+              # regionName is the region of the cloud service
+              # Required;
+              # Example: 
+              # regionName: "RegionOne"
+              regionName: "RegionOne"
+              # networks is a list of network configurations
+              # - name: The name of the network (Required)
+              #   networkid: The unique ID of the network (Required)
+              #   subnetid: The unique ID of the subnet (Required)
+              #   type: Specifies the vNIC type, either "pv" (normal) or "vf" (direct) (Required)
+              #   cidr: The CIDR block for the network (Required)
+              #   secgroup: (Optional) A list of security group IDs associated with the network.
+              #             If not provided, the security group(s) specified in the CNSBC Application custom resource will be used.
+              #             If both are omitted, the default security group will be used.
+              #   vips: (Optional) A list of VIP ranges for reservation. If not provided, the operator will not reserve any VIPs.
+              #   - start: The start IP of the VIP range
+              #     end: The end IP of the VIP range
+              # 
+              # The operator performs VIP reservation for the ranges specified in the 'networks[*].vips'
+              # To disable VIP reservation for a specific network/subnet, omit the 'networks[*].vips' field
+              # When VIP reservation is disabled here, you can reserve VIP ranges using the allocation pools of a network/subnet 
+              # on the cloud provider, which is the preferred method to avoid redundant configurations.
+              # 
+              # The example below illustrates a configuration with VIP reservation disabled:
+              # networks:
+              # - name: "nebula_nw209"
+              #   networkid: "4df6b3b6-cc02-4d3e-b557-8039eeb88da3"
+              #   subnetid: "2724c073-ddb2-4d5b-8bb4-dacad374a5c9"
+              #   type: "vf"
+              #   cidr: "10.1.209.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"]
+              # - name: "nebula_nw210"
+              #   networkid: "57013351-e8b0-49d4-98fd-acf538dda01d"
+              #   subnetid: "a1ef6867-dc03-4633-b8ea-1c0f20f2607c"
+              #   type: "vf"
+              #   cidr: "10.1.210.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"]
+              # 
+              # The following example shows a configuration with VIP reservation enabled.
+              # The 'networks[*].vips' field is included to specify the range of IPs to be reserved.
+              # 
+              # networks:
+              # - name: "nebula_nw209"
+              #   networkid: "4df6b3b6-cc02-4d3e-b557-8039eeb88da3"
+              #   subnetid: "2724c073-ddb2-4d5b-8bb4-dacad374a5c9"
+              #   type: "vf"
+              #   cidr: "10.1.209.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"] 
+              #   vips:
+              #   - start: "10.1.209.200"
+              #     end: "10.1.209.250"
+              # - name: "nebula_nw210"
+              #   networkid: "57013351-e8b0-49d4-98fd-acf538dda01d"
+              #   subnetid: "a1ef6867-dc03-4633-b8ea-1c0f20f2607c"
+              #   type: "vf"
+              #   cidr: "10.1.210.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"] 
+              #   vips:
+              #   - start: "10.1.210.200"
+              #     end: "10.1.210.250"
+              networks:
+                - name: "cnsbc_net"
+                  networkid: "44b4edee-3a11-45c2-bc11-5571421b1942"
+                  subnetid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
+                  type: "pv"
+                  cidr: "11.0.2.0/24"
+          # log configures the logging settings for the CNSBC Application and CNSBC Vnicset operators
+          log:
+            # level sets the logging level
+            # Optional; Allowed Values: Fatal, Error, Warn, Info, Debug, Trace; Default: Info
+            level: "Info"
+            # verbosityLevel sets the level of detail in the logs
+            # "high" includes additional context such as line number, function name, and filename
+            # Optional; Allowed Values: high, low; Default: high
+            # dependencies: Additional context is included only if `verbosityLevel` is "high" and `level` is set to Debug or Trace
+            verbosityLevel: "high"
+        ##################################################################################
+        #
+        # End of Global Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Cloud Native SBC Application Operator Parameters
+        #
+        ##################################################################################
+        cnsbcapp-operator:
+          # serviceAccount defines the service account to be created and assigned RBAC roles
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name specifies the name of the service account to use
+            # Optional;
+            # Note:
+            #   1. If `name` is not set and `create` is true, the name will be generated
+            #   2. If `name` is set and `create` is false, the provided service account name will be used
+            #   3. If `name` is set and `create` is true, a new service account with the provided name will be created
+            name: ""
+          # controller contains cnsbcapp-operator controller specific parameters
+          controller:
+            # image provides details for the cnsbcapp-operator controller image
+            image:
+              # registry specifies the container registry where the cnsbcapp-operator image is hosted
+              # Required if 'global.imageRegistry' is not configured
+              registry: ""
+              # repositoryPrefix specifies the path within the registry for the cnsbcapp-operator image
+              # Required if 'global.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name specifies the name of the image in the registry
+              # Optional; Default: cnsbcapp-operator
+              name: "cnsbcapp-operator"
+              # tag specifies the version of the cnsbcapp-operator image
+              # Optional;
+              tag: ""
+              # pullPolicy defines the image pull policy for the cnsbcapp-operator controller image
+              # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+          # enableWebhooks controls the registration of admission and conversion webhooks for the CnsbcApp resource
+          # Optional; Allowed Values: true, false; Default: true
+          # If this is set to false, Disables webhooks, allowing invalid CnsbcApp resources to be installed, which may cause 
+          # reconciliation errors or result in other invalid resources. The CRD must support only one version.
+          # If this is set to true,  Deploys both admission and conversion webhooks. 
+          # Ensures that only valid CnsbcApp resources are installed and supports multiple CRD versions.
+          # Impact: Invalid resources may cause errors during reconciliation, or the Operator may create invalid Cnsbc resources that fail to run
+          enableWebhooks: true
+          # Start of https parameters sub section
+          https:
+            # k8sClient holds configuration options for the Kubernetes client used in secure HTTPS communication.
+            k8sClient:
+              # allowSelfSignedCertificates is a flag to allow or disallow self-signed k8s server end-entity certificate.
+              # When set to "false", self-signed k8s server certificate will be rejected during TLS handshake.
+              # When set to "true", self-signed k8s server certificate will be allowed during TLS handshake.
+              # Optional; Allowed Values: true, false; Default: false
+              allowSelfSignedCertificates: false
+          # End of https parameters sub section
+
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # Useful if you want to dedicate nodes to just run the cnsbcapp-operator
+          # For example:
+          # tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add extra labels to all the cnsbcapp operator resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the cnsbcapp operator resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of Cloud Native SBC Application Operator Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Cloud Native SBC VNICSet Operator Parameters
+        #
+        ##################################################################################
+        cnsbcvnicset-operator:
+          # serviceAccount defines the service account to be created and assigned RBAC roles
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name specifies the name of the service account to use
+            # Optional;
+            # Note:
+            #   1. If `name` is not set and `create` is true, the name will be generated
+            #   2. If `name` is set and `create` is false, the provided service account name will be used
+            #   3. If `name` is set and `create` is true, a new service account with the provided name will be created
+            name: ""
+          # controller contains cnsbcvnicset-operator controller specific parameters
+          controller:
+            # image provides details for the cnsbcvnicset-operator controller image
+            image:
+              # registry specifies the container registry where the cnsbcvnicset-operator image is hosted
+              # Required if 'global.imageRegistry' is not configured
+              registry: ""
+              # repositoryPrefix specifies the path within the registry for the cnsbcvnicset-operator image
+              # Required if 'global.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name specifies the name of the image in the registry
+              # Optional; Default: vnicset-operator
+              name: "vnicset-operator"
+              # tag specifies the version of the cnsbcvnicset-operator image
+              # Optional;
+              tag: ""
+              # pullPolicy defines the image pull policy for the cnsbcvnicset-operator controller image
+              # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+            # jobImage contains the details for the vNIC injection job image
+            jobImage:
+              # registry specifies the container registry where the vNIC injection job image is hosted
+              # Required if 'global.imageRegistry' is not configured
+              registry: ""
+              # repositoryPrefix specifies the path within the registry for the vNIC injection job image
+              # Required if 'global.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name specifies the name of the vNIC injection job image in the registry
+              # Optional; Default: vnic_injection
+              name: "vnic_injection"
+              # tag specifies the version of the vNIC injection job image
+              # Optional;
+              tag: ""
+              # pullPolicy defines the image pull policy for the vNIC injection job image
+              # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+          # cloudSecretName specifies the name of the secret used to retrieve Cloud authentication credentials
+          # The secret must contain "username" and "password" fields representing the Cloud Username and Password
+          # Required;
+          cloudSecretName: "openstack-auth"
+          # enableCloudProviderLogging controls whether logging of transactional data with the cloud provider is enabled
+          # Optional; Allowed Values: true, false; Default: true
+          # Impact: Enabling this may increase log size by capturing cloud provider transactions
+          enableCloudProviderLogging: true
+          # enableWebhooks controls whether conversion webhooks should be enabled or not.
+          # If this is set to false, conversion webhooks are not deployed, and the cnsbcvnicset CRD must support only one version.
+          # If this is set to true, the Helm chart deploys conversion webhooks for cnsbcvnicset CRD version management.
+          # Optional; Allowed Values: true, false; Default: true
+          enableWebhooks: true
+          # Start of https parameters sub section
+          https:
+            # cloudProviderClient holds configuration options for the cloud provider client used in secure HTTPS communication.
+            cloudProviderClient:
+              # enable is a flag to enable or disable https communication with cloud provider
+              # When set to "true", the operator will setup https connection
+              # When set to "false", it will work with http connection
+              # Required; Allowed Values: true, false
+              enable: True
+              # caCertsConfigMapName specifies the name of the Kubernetes ConfigMap that contains the CA certificates required for TLS verification
+              # These certificates are used to establish a trusted connection with the cloud provider
+              # Dependencies: if https is enabled, this configmap is required and should be deployed before cnsbc-operators
+              caCertsConfigMapName: "cloud-provider-ca-certs"
+              # allowSelfSignedCertificates is a flag to allow or disallow self-signed cloud provider server end-entity certificate.
+              # When set to "false", self-signed cloud provider server certificate will be rejected during TLS handshake.
+              # When set to "true", self-signed cloud provider server certificate will be allowed during TLS handshake.
+              # Optional; Allowed Values: true, false; Default: false
+              allowSelfSignedCertificates: false
+            # k8sClient holds configuration options for the Kubernetes client used in secure HTTPS communication.
+            k8sClient:
+              # allowSelfSignedCertificates is a flag to allow or disallow self-signed k8s server end-entity certificate.
+              # When set to "false", self-signed k8s server certificate will be rejected during TLS handshake.
+              # When set to "true", self-signed k8s server certificate will be allowed during TLS handshake.
+              # Optional; Allowed Values: true, false; Default: false
+              allowSelfSignedCertificates: false
+          # End of https parameters sub section
+
+          # requeueDelay specifies the time delay for requeue operations while attaching or detaching a network port
+          # Optional; Default: "5000ms"
+          # Units: "ns", "us" (or "µs"), "ms", "s", "m" and "h"
+          # Impact: Setting a longer delay can slow down operations; shorter delays may increase system load
+          requeueDelay: "5000ms"
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: "node1"
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # Useful if you want to dedicate nodes to just run the cnsbcvnicset-operator
+          # For example:
+          # tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add extra labels to all the cnsbcvnicset operator resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the cnsbcvnicset operator resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+        ##################################################################################
+        #
+        # End of Cloud Native SBC VNICSet Operator Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Coherence Operator Parameters
+        #
+        ##################################################################################
+        coherence-operator:
+          # image contains the details for the Coherence Operator image
+          image:
+            # registry specifies the container registry from where the Coherence Operator image should be pulled
+            # Required;
+            registry: image-registry.openshift-image-registry.svc:5000
+            # name specifies repository path within the registry where coherence image is located followed by
+            # the name of the Coherence Operator image in the registry
+            name: "cnsbc/coherence-operator"
+            # tag specifies the version of the Coherence Operator image
+            # Optional;
+            tag: ""
+          # watchNamespaces defines the comma-separated list of namespaces 
+          # that the operator will manage for Coherence resources
+          # Optional; Allowed Values: A comma-separated list of namespace names; Default: ""
+          # (an empty string), which indicates that the operator will manage all namespaces
+          # Impact: If set, the operator's scope is restricted to the specified namespaces only
+          # Dependencies: any watchNamespaces value will be ignored if onlySameNamespace is set to true 
+          # Example:
+          # watchNamespaces: "NS1,NS2"
+          watchNamespaces: "ocadm-cnsbc"
+          # imagePullPolicy controls the K8s container spec's pull policy
+          # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: IfNotPresent
+          imagePullPolicy: "IfNotPresent"
+          # imagePullSecrets provides support for pulling images from private registries
+          # Optional;
+          # This field references one or more secrets that will be used for image retrieval
+          # Secrets must be manually created in the target namespace
+          # ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+          # Example:
+          #   For example, adding the pull secret "foo" would be:
+          #
+          #   imagePullSecrets:
+          #   - name: "foo"
+          #
+          #   adding multiple pull secrets "foo" and "bar" would be
+          #
+          #   imagePullSecrets:
+          #   - name: "foo"
+          #   - name: "bar"
+          imagePullSecrets: []
+          # labels specifies additional labels that are added to the Operator Pods.
+          # Optional;
+          labels: {}
+          # annotations specifies additional annotations that are added to the Operator Pods.
+          # Optional;
+          annotations: {}
+          # deploymentLabels specifies additional labels that are added to the Operator Deployment.
+          # Optional;
+          deploymentLabels: {}
+          # deploymentAnnotations specifies additional annotations that are added to the Operator Deployment.
+          # Optional;
+          deploymentAnnotations: {}
+          # globalLabels specifies additional labels that are added to all resources managed by the Operator Deployment.
+          # Optional;
+          globalLabels: {}
+          # globalAnnotations specifies additional annotations that are added to all resources managed by the Operator Deployment.
+          # Optional;
+          globalAnnotations: {}
+          # securityContext specifies the security context configuration for the Operator container.
+          # Optional;
+          # This configuration allows running the container as a non-root user
+          # Example:
+          #   securityContext:
+          #     runAsNonRoot: true
+          #     runAsUser: 1000
+          # Specific to OpenShift clusters: 
+          # If the cluster has any SCC (Security Context Constraints) configured that 
+          # allows only specific range of values for the runAsUser parameter, 
+          # configure the runAsUser parameter within the allowed range
+          # Reference: https://docs.openshift.com/container-platform/4.14/authentication/managing-security-context-constraints.html
+          securityContext:
+            # runAsNonRoot indicates whether the container should run as a non-root user.
+            # Optional; Default: true
+            runAsNonRoot: true
+            # runAsUser specifies the user ID to run the container as.
+            # Optional; Default: 1000
+            runAsUser: 1000
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          #   ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # nodeSelector is the Node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          nodeSelector: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          #   Useful if you want to dedicate nodes to just run the coherence container
+          #   For example:
+          #   tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # serviceAccountName is the name of the service account to create and assign RBAC roles to.
+          # Optional; Default: "coherence-operator"
+          # If not set, the default name used is "coherence-operator".
+          serviceAccountName: "coherence-operator"
+          # webhooks controls whether the Coherence Operator registers admission web-hooks for the Coherence resource
+          # Optional; Default: true
+          # If set to false, invalid Coherence resources may be installed in the Kubernetes cluster
+          # This can cause errors when the Operator reconciles them or create invalid Kubernetes resources
+          webhooks: true
+        ##################################################################################
+        #
+        # End of Coherence Operator Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of MySQL Operator Parameters
+        #
+        ##################################################################################
+        mysql-operator:
+          # image provides details of the MySQL Operator image
+          image:
+            # registry specifies the container registry from where the image should be pulled
+            # Required;
+            registry: image-registry.openshift-image-registry.svc:5000
+            # repository specifies the path within the registry where the MySQL Operator image is located
+            # Required;
+            repository: "cnsbc"
+            # name specifies the name of the image in the registry
+            # Optional; Default: "enterprise-operator" 
+            name: "enterprise-operator"
+            # tag specifies the version number of the image in the registry
+            # Optional; Default is the chart appVersion
+            tag: ""
+            # pullPolicy defines the image pull policy
+            # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: IfNotPresent
+            pullPolicy: "IfNotPresent"
+            # pullSecrets contains details for image pull secrets
+            pullSecrets:
+              # enabled specifies whether image pull secrets are enabled for pulling the MySQL Operator image
+              # Optional; Allowed-values: true, false; Default: false
+              # Dependencies: When set to 'true', the image pull secret specified by 'secretName' will be used for authentication
+              enabled: false
+              # secretName specifies the name of the secret used for image pulling
+              # Dependencies: Mandatory if 'enabled' is true
+              secretName: ""
+          # envs contains environment values applicable to the innodb-cluster deployment
+          # The mysql-operator generates the manifests for deploying the 
+          # innodb-cluster instances. These env values are used in those manifests.
+          # These may differ from the values in the mysql-operator.image subsection.
+          envs:
+            # imagesDefaultRegistry is the default registry for MySQL images
+            # Required;
+            imagesDefaultRegistry: image-registry.openshift-image-registry.svc:5000
+            # imagesDefaultRepository is the default repository for MySQL images
+            # Required;
+            imagesDefaultRepository: "cnsbc"
+            # imagesPullPolicy controls the Kubernetes container spec's pull policy for innodb-cluster
+            # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: IfNotPresent
+            imagesPullPolicy: "IfNotPresent"
+            # k8sClusterDomain is the Kubernetes cluster domain name forming the MySQL service FQDN
+            # Optional; Default: cluster.local
+            k8sClusterDomain: "cluster.local"
+          # disableLookups determines if Helm will contact the Kubernetes API during template rendering
+          # Optional; Allowed-values: true, false; Default: false
+          # Note: 
+          #   If you would like to debug the Helm output with `helm template`, you need
+          #   to turn disableLookups on as during `helm template` Helm won't contact the Kubernetes API
+          #   and all lookups will thus fail
+          disableLookups: false
+        ##################################################################################
+        #
+        # End of MySQL Operator Parameters
+        #
+        ##################################################################################
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ocadm-cnsbc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
