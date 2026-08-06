@@ -434,6 +434,8 @@ spec:
               limits:
                 memory: "4Gi"
                 # hugepages-2Mi: "2Gi"
+
+                hugepages-2Mi: "0"
             # vnics to be added to the signaling container
             # Required;
             # VIPs must be configured for vnic type 'pv/Normal'
@@ -694,6 +696,8 @@ spec:
               limits:
                 memory: "4Gi"
                 # hugepages-2Mi: "2Gi"
+
+                hugepages-2Mi: "0"
             # vnics to be added to the media
             # Required;
             # VIPs must be configured for vnic type 'pv/Normal'
@@ -954,6 +958,8 @@ spec:
               limits:
                 memory: "4Gi"
                 # hugepages-2Mi: "2Gi"
+
+                hugepages-2Mi: "0"
             # vnics to be added to the transcode
             # Required;
             # VIPs must be configured for vnic type 'pv/Normal'
