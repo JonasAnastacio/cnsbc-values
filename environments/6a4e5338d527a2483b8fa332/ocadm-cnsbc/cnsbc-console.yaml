@@ -236,7 +236,7 @@ spec:
             # Storage Class used by the volume
             # Optional; Default: standard
             # Storage Class provided here should support ReadWriteOnce
-            storageClassName: "standard"
+            storageClassName: "rook-cephfs"
             # Resource consumption section
             resources:
               requests:
