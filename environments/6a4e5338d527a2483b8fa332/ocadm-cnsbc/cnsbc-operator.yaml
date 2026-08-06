@@ -429,10 +429,10 @@ spec:
             registry: image-registry.openshift-image-registry.svc:5000
             # name specifies repository path within the registry where coherence image is located followed by
             # the name of the Coherence Operator image in the registry
-            name: "cnsbc/coherence-operator::3.5.2"
+            name: "cnsbc/coherence-operator"
             # tag specifies the version of the Coherence Operator image
             # Optional;
-            tag: ""
+            tag: "3.5.2"
           # watchNamespaces defines the comma-separated list of namespaces 
           # that the operator will manage for Coherence resources
           # Optional; Allowed Values: A comma-separated list of namespace names; Default: ""
