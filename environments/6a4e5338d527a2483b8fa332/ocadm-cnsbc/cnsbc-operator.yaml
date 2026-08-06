@@ -165,8 +165,8 @@ spec:
               #     end: "10.1.210.250"
               networks:
                 - name: "cnsbc_net"
-                  networkid: "44b4edee-3a11-45c2-bc11-5571421b1942"
-                  subnetid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
+                  networkid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
+                  subnetid: "44b4edee-3a11-45c2-bc11-5571421b1942"
                   type: "pv"
                   cidr: "11.0.2.0/24"
           # log configures the logging settings for the CNSBC Application and CNSBC Vnicset operators
