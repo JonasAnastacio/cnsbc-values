@@ -15,6 +15,15 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
+  ignoreDifferences:
+  - group: cgbu.oracle.com
+    kind: CnsbcApp
+    jqPathExpressions:
+    - '.metadata.labels["com.oracle.cnsbc.operator/owner"]'
+    - '.spec.resourceTemplate.status'
+    - '.spec.resourceTemplate.spec.template.spec.containers[] | .ports[]? | .protocol'
+    - '.spec.resourceTemplate.spec.template.spec.containers[] | .env[]? | select(.valueFrom.resourceFieldRef? != null) | .valueFrom.resourceFieldRef.divisor'
+    - '.spec.resourceTemplate.spec.template.spec.containers[] | select(.resources.limits.cpu != null) | .resources.limits.cpu'
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-application
