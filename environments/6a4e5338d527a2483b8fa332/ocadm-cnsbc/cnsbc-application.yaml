@@ -3,10 +3,27 @@ kind: Application
 metadata:
   name: cnsbc-application
   namespace: argocd
+  labels:
+    automated: ""
+    ocadmInstanceId: "6a59aedbc7021aa7b0cdd106"
+    ocadmInstanceType: cnsbc
+    ocadmDeploymentMode: argocd
+    ocadmHelmRelease: "ocadm-cnsbc"
+    ocadmTargetNamespace: "ocadm-cnsbc"
+    ocadmTrackingAnchor: "true"
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
+  ignoreDifferences:
+  - group: cgbu.oracle.com
+    kind: CnsbcApp
+    jqPathExpressions:
+    - '.metadata.labels["com.oracle.cnsbc.operator/owner"]'
+    - '.spec.resourceTemplate.status'
+    - '.spec.resourceTemplate.spec.template.spec.containers[] | .ports[]? | .protocol'
+    - '.spec.resourceTemplate.spec.template.spec.containers[] | .env[]? | select(.valueFrom.resourceFieldRef? != null) | .valueFrom.resourceFieldRef.divisor'
+    - '.spec.resourceTemplate.spec.template.spec.containers[] | select(.resources.limits.cpu != null) | .resources.limits.cpu'
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-application
@@ -416,7 +433,9 @@ spec:
             resources:
               limits:
                 memory: "4Gi"
-                hugepages-2Mi: "2Gi"
+                # hugepages-2Mi: "2Gi"
+
+                hugepages-2Mi: 2Gi
             # vnics to be added to the signaling container
             # Required;
             # VIPs must be configured for vnic type 'pv/Normal'
@@ -676,7 +695,9 @@ spec:
             resources:
               limits:
                 memory: "4Gi"
-                hugepages-2Mi: "2Gi"
+                # hugepages-2Mi: "2Gi"
+
+                hugepages-2Mi: 2Gi
             # vnics to be added to the media
             # Required;
             # VIPs must be configured for vnic type 'pv/Normal'
@@ -936,7 +957,9 @@ spec:
             resources:
               limits:
                 memory: "4Gi"
-                hugepages-2Mi: "2Gi"
+                # hugepages-2Mi: "2Gi"
+
+                hugepages-2Mi: 2Gi
             # vnics to be added to the transcode
             # Required;
             # VIPs must be configured for vnic type 'pv/Normal'
@@ -1506,3 +1529,9 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    retry:
+      limit: 10
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
