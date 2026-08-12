@@ -485,7 +485,7 @@ spec:
             resources:
               limits:
                 memory: "2Gi"
-                cpu: 1
+                cpu: "1"
             # jvm heap memory for signaling database pods
             # when Heap memory of the signalingDatabase cluster need to be allocated
             # manually with a certain value, else Operator will
@@ -758,7 +758,7 @@ spec:
             resources:
               limits:
                 memory: "1Gi"
-                cpu: 1
+                cpu: "1"
             # jvm heap memory for media database pods
             # when Heap memory of the mediaDatabase cluster need to be allocated
             # manually with a certain value, else Operator will
