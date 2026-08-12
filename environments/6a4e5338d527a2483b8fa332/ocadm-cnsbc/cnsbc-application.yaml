@@ -121,7 +121,7 @@ spec:
             # in addition to the container's primary GID set above
             # This might be useful in certain cases where shared volume(nfs share) groupId is different
             # from the value as specified under "groupId" field
-            supplementalGroups: []
+            supplementalGroups:
           # enableTranscoding setting this flag to true will enable transcoding resource deployment
           # Optional; Allowed-values: true, false ; Default: false
           # Impact: setting to false will not deploy transcoding resources. So transcoding functionality will not work
