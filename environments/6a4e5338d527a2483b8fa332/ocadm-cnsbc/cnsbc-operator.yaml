@@ -177,7 +177,7 @@ spec:
           log:
             # level sets the logging level
             # Optional; Allowed Values: Fatal, Error, Warn, Info, Debug, Trace; Default: Info
-            level: "Info"
+            level: "Debug"
             # verbosityLevel sets the level of detail in the logs
             # "high" includes additional context such as line number, function name, and filename
             # Optional; Allowed Values: high, low; Default: high
