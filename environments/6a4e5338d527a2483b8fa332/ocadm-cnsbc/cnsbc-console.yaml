@@ -52,13 +52,13 @@ spec:
           serviceAccountName: &serviceAccountName ""
           # iamStaticIpAddress is the Static IP Address of Console IAM Gateway
           # Required
-          iamStaticIpAddress: &iamIgwIp "10.0.2.112"
+          iamStaticIpAddress: &iamIgwIp "10.133.96.23"
           # iamPublicHttpsSignalingPort represents the HTTPs port for the IAM Gateway.
           # Optional; Default: 443
           iamPublicHttpsSignalingPort: &iamIgwPort 443
           # coreStaticIpAddress is the Static IP Address of Console Core Gateway
           # Required
-          coreStaticIpAddress: &coreIgwIp "10.0.2.113"
+          coreStaticIpAddress: &coreIgwIp "10.133.96.22"
           # corePublicHttpsSignalingPort represents the HTTPs port for the Core Gateway.
           # Optional; Default: 443
           corePublicHttpsSignalingPort: &coreIgwPort 443
