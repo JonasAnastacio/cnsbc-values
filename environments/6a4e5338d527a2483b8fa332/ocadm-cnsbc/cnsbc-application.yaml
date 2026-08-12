@@ -483,7 +483,7 @@ spec:
             #     cpu: 1
             resources:
               limits:
-                memory: "1Gi"
+                memory: "2Gi"
                 cpu: 1
             # jvm heap memory for signaling database pods
             # when Heap memory of the signalingDatabase cluster need to be allocated

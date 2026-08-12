@@ -52,13 +52,13 @@ spec:
           serviceAccountName: &serviceAccountName ""
           # iamStaticIpAddress is the Static IP Address of Console IAM Gateway
           # Required
-          iamStaticIpAddress: &iamIgwIp "10.133.96.23"
+          iamStaticIpAddress: &iamIgwIp "10.0.2.112"
           # iamPublicHttpsSignalingPort represents the HTTPs port for the IAM Gateway.
           # Optional; Default: 443
           iamPublicHttpsSignalingPort: &iamIgwPort 443
           # coreStaticIpAddress is the Static IP Address of Console Core Gateway
           # Required
-          coreStaticIpAddress: &coreIgwIp "10.133.96.22"
+          coreStaticIpAddress: &coreIgwIp "10.0.2.113"
           # corePublicHttpsSignalingPort represents the HTTPs port for the Core Gateway.
           # Optional; Default: 443
           corePublicHttpsSignalingPort: &coreIgwPort 443
@@ -115,7 +115,7 @@ spec:
               # Annotation section
               # Optional
               annotations:
-                metallb.universe.tf/address-pool: "oam"
+                metallb.universe.tf/address-pool: "ocp1-external-cnsbc"
             # lbDeployments specifies labels and annotation is applied only to Load Balancer deployments
             lbDeployments:
               # Labels section
@@ -907,7 +907,7 @@ spec:
             level:
               # root specifies log level for all processes
               # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
-              root: "WARN"
+              root: "DEBUG"
               # ingress specifies log level for main application process
               # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
               ingress: "WARN"
