@@ -8,7 +8,7 @@ metadata:
     ocadmInstanceId: "6a59aedbc7021aa7b0cdd106"
     ocadmInstanceType: cnsbc
     ocadmDeploymentMode: argocd
-    ocadmHelmRelease: "ocadm-cnsbc"
+    ocadmHelmRelease: "ocadm-cnsbc-application"
     ocadmTargetNamespace: "ocadm-cnsbc"
     ocadmTrackingAnchor: "false"
   finalizers:
@@ -77,7 +77,7 @@ spec:
               configMgr:
                 # host name of the service (Use the service which has 'rest' as suffix)
                 # Required
-                host: "ocadm-cnsbc-config-service-rest"
+                host: "ocadm-cnsbc-application-config-service-rest"
                 # Port used by the service
                 # Optional; Default: 80
                 port: "8080"
@@ -85,7 +85,7 @@ spec:
               cliProxy:
                 # host name of the service
                 # Required
-                host: "ocadm-cnsbc-cnsbc-cli-proxy-service"
+                host: "ocadm-cnsbc-application-cnsbc-cli-proxy-service"
                 # Port used by the service
                 # Optional; Default: 80
                 port: "8080"
@@ -93,7 +93,7 @@ spec:
               fileMgr:
                 # host name of the Service
                 # Required
-                host: "ocadm-cnsbc-cnsbc-file-manager-service"
+                host: "ocadm-cnsbc-application-cnsbc-file-manager-service"
                 # Port used by the service
                 # Optional; Default: 80
                 port: "8080"
@@ -1053,7 +1053,7 @@ spec:
               LIX1-Proxy-0:
                 # Hostname of the LIX1-Proxy-0
                 # Required
-                host: "ocadm-cnsbc-cnsbc-signaling-0"
+                host: "ocadm-cnsbc-application-cnsbc-signaling-0"
                 # Port used by the LIX1-Proxy-0
                 # Optional; Default: 80
                 port: "8082"
@@ -1062,7 +1062,7 @@ spec:
               LIX1-Proxy-1:
                 # Hostname of the LIX1-Proxy-1
                 # Required
-                host: "ocadm-cnsbc-cnsbc-signaling-1"
+                host: "ocadm-cnsbc-application-cnsbc-signaling-1"
                 # Port used by the LIX1-Proxy-1
                 # Optional; Default: 80
                 port: "8082"

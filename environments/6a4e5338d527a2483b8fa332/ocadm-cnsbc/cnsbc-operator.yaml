@@ -8,7 +8,7 @@ metadata:
     ocadmInstanceId: "6a59aedbc7021aa7b0cdd106"
     ocadmInstanceType: cnsbc
     ocadmDeploymentMode: argocd
-    ocadmHelmRelease: "ocadm-cnsbc"
+    ocadmHelmRelease: "ocadm-cnsbc-application"
     ocadmTargetNamespace: "ocadm-cnsbc"
     ocadmTrackingAnchor: "false"
   finalizers:

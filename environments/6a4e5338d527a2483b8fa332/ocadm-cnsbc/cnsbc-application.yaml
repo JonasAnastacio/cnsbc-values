@@ -8,7 +8,7 @@ metadata:
     ocadmInstanceId: "6a59aedbc7021aa7b0cdd106"
     ocadmInstanceType: cnsbc
     ocadmDeploymentMode: argocd
-    ocadmHelmRelease: "ocadm-cnsbc"
+    ocadmHelmRelease: "ocadm-cnsbc-application"
     ocadmTargetNamespace: "ocadm-cnsbc"
     ocadmTrackingAnchor: "true"
   finalizers:
@@ -29,7 +29,7 @@ spec:
     chart: cnsbc-application
     targetRevision: "25.1.1"
     helm:
-      releaseName: ocadm-cnsbc
+      releaseName: ocadm-cnsbc-application
       values: |
         # YAML consisting of parameters used to deploy the Cloud Native SBC application helm chart
 
