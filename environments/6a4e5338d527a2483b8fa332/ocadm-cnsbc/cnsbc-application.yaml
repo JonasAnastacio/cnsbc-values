@@ -453,6 +453,7 @@ spec:
               - name: "net0"
                 network-name: "cnsbc_net"
                 vips: ["11.0.2.10"]
+                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # log defines the log level for processes/tasks in signaling engine
             log:
               # level allows to configure task/process wide logging information
@@ -725,6 +726,7 @@ spec:
               - name: "net0"
                 network-name: "cnsbc_net"
                 vips: ["11.0.2.11"]
+                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # log defines the log level for processes/tasks in media engine
             log:
               # level allows to configure task/process wide logging information
@@ -987,6 +989,7 @@ spec:
               - name: "net0"
                 network-name: "cnsbc_net"
                 vips: ["11.0.2.12"]
+                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # log defines the log level for processes/tasks in transcode engine
             log:
               # level allows to configure task/process wide logging information
