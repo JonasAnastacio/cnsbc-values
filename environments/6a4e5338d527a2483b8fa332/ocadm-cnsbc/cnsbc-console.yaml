@@ -18,7 +18,7 @@ spec:
   ignoreDifferences:
   - kind: ServiceAccount
     jqPathExpressions:
-    - '.imagePullSecrets[]? | select(.name | test("-dockercfg-[a-z0-9]+$"))'
+    - '.imagePullSecrets? | if . == [] or (type == "array" and all(.[]?; .name | test("-dockercfg-[a-z0-9]+$"))) then . else .[]? | select(.name | test("-dockercfg-[a-z0-9]+$")) end'
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-console
