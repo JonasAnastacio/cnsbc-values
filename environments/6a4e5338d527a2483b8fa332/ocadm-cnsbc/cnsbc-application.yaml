@@ -24,6 +24,12 @@ spec:
     - '.spec.resourceTemplate.spec.template.spec.containers[] | .ports[]? | .protocol'
     - '.spec.resourceTemplate.spec.template.spec.containers[] | .env[]? | select(.valueFrom.resourceFieldRef? != null) | .valueFrom.resourceFieldRef.divisor'
     - '.spec.resourceTemplate.spec.template.spec.containers[] | select(.resources.limits.cpu != null) | .resources.limits.cpu'
+  - group: cgbu.oracle.com
+    kind: CnsbcApp
+    name: ocadm-cnsbc-application-cnsbc-media
+    namespace: ocadm-cnsbc
+    jqPathExpressions:
+    - '.spec.resourceTemplate.spec.template.spec.securityContext.supplementalGroups'
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-application
