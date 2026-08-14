@@ -119,7 +119,7 @@ spec:
               # Annotation section
               # Optional
               annotations:
-                metallb.universe.tf/address-pool: "oam"
+                metallb.universe.tf/address-pool: "ocp1-external-cnsbc"
             # lbDeployments specifies labels and annotation is applied only to Load Balancer deployments
             lbDeployments:
               # Labels section
@@ -911,7 +911,7 @@ spec:
             level:
               # root specifies log level for all processes
               # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
-              root: "WARN"
+              root: "DEBUG"
               # ingress specifies log level for main application process
               # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
               ingress: "WARN"
