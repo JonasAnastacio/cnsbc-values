@@ -169,15 +169,11 @@ spec:
                   subnetid: "44b4edee-3a11-45c2-bc11-5571421b1942"
                   type: "pv"
                   cidr: "11.0.2.0/24"
-                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
-                  vips:
-                    - start: "11.0.2.5"
-                      end: "11.0.2.50"
           # log configures the logging settings for the CNSBC Application and CNSBC Vnicset operators
           log:
             # level sets the logging level
             # Optional; Allowed Values: Fatal, Error, Warn, Info, Debug, Trace; Default: Info
-            level: "Debug"
+            level: "Info"
             # verbosityLevel sets the level of detail in the logs
             # "high" includes additional context such as line number, function name, and filename
             # Optional; Allowed Values: high, low; Default: high

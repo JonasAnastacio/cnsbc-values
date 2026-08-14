@@ -122,7 +122,7 @@ spec:
             # in addition to the container's primary GID set above
             # This might be useful in certain cases where shared volume(nfs share) groupId is different
             # from the value as specified under "groupId" field
-            supplementalGroups:
+            supplementalGroups: []
           # enableTranscoding setting this flag to true will enable transcoding resource deployment
           # Optional; Allowed-values: true, false ; Default: false
           # Impact: setting to false will not deploy transcoding resources. So transcoding functionality will not work
@@ -454,7 +454,6 @@ spec:
               - name: "net0"
                 network-name: "cnsbc_net"
                 vips: ["11.0.2.10"]
-                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # log defines the log level for processes/tasks in signaling engine
             log:
               # level allows to configure task/process wide logging information
@@ -485,8 +484,8 @@ spec:
             #     cpu: 1
             resources:
               limits:
-                memory: "2Gi"
-                cpu: "1"
+                memory: "1Gi"
+                cpu: 1
             # jvm heap memory for signaling database pods
             # when Heap memory of the signalingDatabase cluster need to be allocated
             # manually with a certain value, else Operator will
@@ -727,7 +726,6 @@ spec:
               - name: "net0"
                 network-name: "cnsbc_net"
                 vips: ["11.0.2.11"]
-                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # log defines the log level for processes/tasks in media engine
             log:
               # level allows to configure task/process wide logging information
@@ -759,7 +757,7 @@ spec:
             resources:
               limits:
                 memory: "1Gi"
-                cpu: "1"
+                cpu: 1
             # jvm heap memory for media database pods
             # when Heap memory of the mediaDatabase cluster need to be allocated
             # manually with a certain value, else Operator will
@@ -990,7 +988,6 @@ spec:
               - name: "net0"
                 network-name: "cnsbc_net"
                 vips: ["11.0.2.12"]
-                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # log defines the log level for processes/tasks in transcode engine
             log:
               # level allows to configure task/process wide logging information
@@ -1232,7 +1229,7 @@ spec:
             resources:
               limits:
                 memory: "1Gi"
-                cpu: "1"
+                cpu: 1
               requests:
                 memory: "512Mi"
                 cpu: "500m"
