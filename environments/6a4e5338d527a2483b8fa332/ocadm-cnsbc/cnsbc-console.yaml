@@ -767,7 +767,12 @@ spec:
               # Optional; Default: 0.5Gi
               initServiceMemory: 0.5Gi
           # service configuration of IAM Gateway pod
+          enableIncomingHttp1: true
           service:
+            type: LoadBalancer
+            staticNodePortEnabled: true
+            staticHttp1NodePort: 31821
+            staticHttpsNodePort: 32654
             # publicHttpsSignalingPort specifies port used for HTTPS/1.0 (secured SSL)
             # Optional; Default: 443
             publicHttpsSignalingPort: *iamIgwPort
