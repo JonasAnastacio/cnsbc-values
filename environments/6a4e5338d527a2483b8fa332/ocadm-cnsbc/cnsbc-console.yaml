@@ -900,8 +900,8 @@ spec:
           service:
             type: LoadBalancer
             staticNodePortEnabled: true
-            staticHttp1NodePort: 32407
-            staticHttpsNodePort: 31518
+            staticHttp1NodePort: 30080
+            staticHttpsNodePort: 30081
             # publicHttpsSignalingPort specifies port used for HTTPS/1.0 (secured SSL)
             # Optional; Default: 443
             publicHttpsSignalingPort: *coreIgwPort
