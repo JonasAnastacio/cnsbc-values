@@ -65,7 +65,7 @@ spec:
           coreStaticIpAddress: &coreIgwIp "10.133.96.22"
           # corePublicHttpsSignalingPort represents the HTTPs port for the Core Gateway.
           # Optional; Default: 443
-          corePublicHttpsSignalingPort: &coreIgwPort 443
+          corePublicHttpsSignalingPort: &coreIgwPort 8443
           # routesConfig is for configuring routes for Cloud Native SBC services 
           # 
           # Example: 
