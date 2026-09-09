@@ -769,7 +769,7 @@ spec:
           # service configuration of IAM Gateway pod
           enableIncomingHttp1: true
           service:
-            type: LoadBalancer
+            type: NodePort
             staticNodePortEnabled: true
             staticHttp1NodePort: 31821
             staticHttpsNodePort: 32654
@@ -903,7 +903,7 @@ spec:
 
           enableIncomingHttp1: true
           service:
-            type: LoadBalancer
+            type: NodePort
             staticNodePortEnabled: true
             staticHttp1NodePort: 30080
             staticHttpsNodePort: 30081
