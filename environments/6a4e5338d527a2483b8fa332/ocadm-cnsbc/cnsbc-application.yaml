@@ -503,75 +503,6 @@ spec:
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
             # Do not change this field here. To add additional metrics, specify them in metrics-allowlist.yaml only.
             metricsAllowList: []
-            # vnics secondary network interfaces to be added to the signaling engine pod
-            # vnics accepts only one of two array objects, multus or openstack
-            # Use "openstack" for OpenStack CNE systems that use the cnSBC vnicset operator
-            # Use "multus" for non-OpenStack CNE systems and OpenStack CNE systems that use Multus
-            vnics:
-              # for OpenStack with cnsbc vnicset operator based CNE, use following
-              # If the vnics type is 'pv/Normal', VIPs must be configured.
-              # If the vnics type is 'vf/Direct', VIP configuration is optional.
-              # vnics:
-              #   # OpenStack with cnsbc vnicset operator based CNE
-              #   # Optional;
-              #   openstack:
-              #   # name of the interface attached to the Pod
-              #   # Required;
-              #   - name: net0
-              #   # network-name is name of the openstack provider or tenant network
-              #   # Required;
-              #   network-name: access-nw
-              #   # vips list of IP addresses shall be configured as virtual IPs
-              #   # Optional;
-              #   vips: ["10.1.8.160"]
-              #   # secgroup list of security groups shall be applied on the openstack port
-              #   # Optional;
-              #   secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              #
-              # Example:
-              # vnics:
-              #   openstack:
-              #   - name: net0
-              #     network-name: access-nw
-              #     vips: ["10.2.8.160"]
-              #     secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              #   - name: net1
-              #     network-name: core-nw
-              #     vips: ["10.2.8.160"]
-              #     secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              openstack: []
-              # for BareMetal CNE and OpenStack with Multus deployments, use following
-              # vnics:
-              #   # multus CNI is used to inject the secondary network interfaces to the Pod
-              #   # Optional;
-              #   multus:
-              #   # name of network attachment definition
-              #   # Required;
-              #   - nameNAD:
-              #   # namespace in which above network attachment definition is created
-              #   # Required;
-              #     namespace:
-              #   # vNICResourceName name of the vNIC resource discovered and advertised by network device plugin, such as the SRIOV device plugin
-              #   # Following command can be used to list the vNIC resource names discovered by the device plugin
-              #   # kubectl get node <node-name> -o json | jq '.status.allocatable'
-              #   # Required;
-              #     vNICResourceName:
-              #
-              # Example:
-              # vnics:
-              #   multus:
-              #   - nameNAD: access
-              #     namespace: cnsbc-operators
-              #     vNICResourceName: oracle.com/network_1
-              #   - nameNAD: core
-              #     namespace: cnsbc-operators
-              #     vNICResourceName: oracle.com/network_2
-              multus: []
-              0:
-                name: net0
-                network-name: cnsbc_net
-                vips:
-                  - 11.0.2.10
             # log defines the log level for processes/tasks in signaling engine
             log:
               # level allows to configure task/process wide logging information
@@ -580,6 +511,11 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+            vnics:
+              - name: net0
+                network-name: cnsbc_net
+                vips:
+                  - 11.0.2.10
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management policy:
           # - The total core count assigned to the container must be a multiple of the SMT threads per physical core.
           #   For example, with 2 threads per core, the total CPU count must be a multiple of 2.
@@ -868,75 +804,6 @@ spec:
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
             # Do not change this field here. To add additional metrics, specify them in metrics-allowlist.yaml only.
             metricsAllowList: []
-            # vnics secondary network interfaces to be added to the media engine pod
-            # vnics accepts only one of two array objects, multus or openstack
-            # Use "openstack" for OpenStack CNE systems that use the cnSBC vnicset operator
-            # Use "multus" for non-OpenStack CNE systems and OpenStack CNE systems that use Multus
-            vnics:
-              # for OpenStack with cnsbc vnicset operator based CNE, use following
-              # If the vnics type is 'pv/Normal', VIPs must be configured.
-              # If the vnics type is 'vf/Direct', VIP configuration is optional.
-              # vnics:
-              #   # OpenStack with cnsbc vnicset operator based CNE
-              #   # Optional;
-              #   openstack:
-              #   # name of the interface attached to the Pod
-              #   # Required;
-              #   - name: net0
-              #   # network-name is name of the openstack provider or tenant network
-              #   # Required;
-              #   network-name: access-nw
-              #   # vips list of IP addresses shall be configured as virtual IPs
-              #   # Optional;
-              #   vips: ["10.1.8.160"]
-              #   # secgroup list of security groups shall be applied on the openstack port
-              #   # Optional;
-              #   secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              #
-              # Example:
-              # vnics:
-              #   openstack:
-              #   - name: net0
-              #     network-name: access-nw
-              #     vips: ["10.2.8.160"]
-              #     secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              #   - name: net1
-              #     network-name: core-nw
-              #     vips: ["10.2.8.160"]
-              #     secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              openstack: []
-              # for BareMetal CNE and OpenStack with Multus deployments, use following
-              # vnics:
-              #   # multus CNI is used to inject the secondary network interfaces to the Pod
-              #   # Optional;
-              #   multus:
-              #   # name of network attachment definition
-              #   # Required;
-              #   - nameNAD:
-              #   # namespace in which above network attachment definition is created
-              #   # Required;
-              #     namespace:
-              #   # vNICResourceName name of the vNIC resource discovered and advertised by network device plugin, such as the SRIOV device plugin
-              #   # Following command can be used to list the vNIC resource names discovered by the device plugin
-              #   # kubectl get node <node-name> -o json | jq '.status.allocatable'
-              #   # Required;
-              #     vNICResourceName:
-              #
-              # Example:
-              # vnics:
-              #   multus:
-              #   - nameNAD: access
-              #     namespace: cnsbc-operators
-              #     vNICResourceName: oracle.com/network_1
-              #   - nameNAD: core
-              #     namespace: cnsbc-operators
-              #     vNICResourceName: oracle.com/network_2
-              multus: []
-              0:
-                name: net0
-                network-name: cnsbc_net
-                vips:
-                  - 11.0.2.11
             # log defines the log level for processes/tasks in media engine
             log:
               # level allows to configure task/process wide logging information
@@ -945,6 +812,11 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+            vnics:
+              - name: net0
+                network-name: cnsbc_net
+                vips:
+                  - 11.0.2.11
           # On SMT-enabled systems with 'full-pcpu-only' set in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, valid total core counts are multiples of 2.
@@ -1211,68 +1083,6 @@ spec:
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
             # Do not change this field here. To add additional metrics, specify them in metrics-allowlist.yaml only.
             metricsAllowList: []
-            # vnics secondary network interfaces to be added to the transcode engine pod
-            # vnics accepts only one of two array objects, multus or openstack
-            # Use "openstack" for OpenStack CNE systems that use the cnSBC vnicset operator
-            # Use "multus" for non-OpenStack CNE systems and OpenStack CNE systems that use Multus
-            vnics:
-              # for OpenStack with cnsbc vnicset operator based CNE, use following
-              # If the vnics type is 'pv/Normal', VIPs must be configured.
-              # If the vnics type is 'vf/Direct', VIP configuration is optional.
-              # vnics:
-              #   # OpenStack with cnsbc vnicset operator based CNE
-              #   # Optional;
-              #   openstack:
-              #   # name of the interface attached to the Pod
-              #   # Required;
-              #   - name: net0
-              #   # network-name is name of the openstack provider or tenant network
-              #   # Required;
-              #   network-name: access-nw
-              #   # vips list of IP addresses shall be configured as virtual IPs
-              #   # Optional;
-              #   vips: ["10.1.8.160"]
-              #   # secgroup list of security groups shall be applied on the openstack port
-              #   # Optional;
-              #   secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              #
-              # Example:
-              # vnics:
-              #   openstack:
-              #   - name: net0
-              #     network-name: xcode-nw
-              #     vips: ["10.2.8.160"]
-              #     secgroup: ["e2009b85-994e-4e20-8332-6e022065bd66"]
-              openstack: []
-              # for BareMetal CNE and OpenStack with Multus deployments, use following
-              # vnics:
-              #   # multus CNI is used to inject the secondary network interfaces to the Pod
-              #   # Optional;
-              #   multus:
-              #   # name of network attachment definition
-              #   # Required;
-              #   - nameNAD:
-              #   # namespace in which above network attachment definition is created
-              #   # Required;
-              #     namespace:
-              #   # vNICResourceName name of the vNIC resource discovered and advertised by network device plugin, such as the SRIOV device plugin
-              #   # Following command can be used to list the vNIC resource names discovered by the device plugin
-              #   # kubectl get node <node-name> -o json | jq '.status.allocatable'
-              #   # Required;
-              #     vNICResourceName:
-              #
-              # Example:
-              # vnics:
-              #   multus:
-              #   - nameNAD: xcode
-              #     namespace: cnsbc-operators
-              #     vNICResourceName: oracle.com/network_3
-              multus: []
-              0:
-                name: net0
-                network-name: cnsbc_net
-                vips:
-                  - 11.0.2.12
             # log defines the log level for processes/tasks in transcode engine
             log:
               # level allows to configure task/process wide logging information
@@ -1281,6 +1091,11 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+            vnics:
+              - name: net0
+                network-name: cnsbc_net
+                vips:
+                  - 11.0.2.12
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, total CPUs must be a multiple of 2.
