@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   labels:
     automated: ""
-    ocadmInstanceId: "6a59aedbc7021aa7b0cdd106"
+    ocadmInstanceId: "6aa8eff034808551a79c27a2"
     ocadmInstanceType: cnsbc
     ocadmDeploymentMode: argocd
     ocadmHelmRelease: "ocadm-cnsbc-application"
@@ -119,7 +119,7 @@ spec:
               # Annotation section
               # Optional
               annotations:
-                metallb.universe.tf/address-pool: "ocp1-external-cnsbc"
+                metallb.universe.tf/address-pool: "oam"
             # lbDeployments specifies labels and annotation is applied only to Load Balancer deployments
             lbDeployments:
               # Labels section
@@ -387,6 +387,21 @@ spec:
                       # Memory utilization
                       # Optional; Default: 128Mi
                       memory: 128Mi
+            # Command line options passed to MySQL Router while bootstrapping
+            # "DEFAULT.ssl_cipher" : The list of permissible encryption ciphers for connections that use TLSv1.2
+            # "conf-bind-address" : Address to which the Console Router pod is listening (Used for DB Connections)
+            # "http_server.bind_address" : HTTP server address to which the Console Router pod is listening (Used for readiness/liveness probes)
+            #
+            # Note:
+            #  If there are DB router restarts or DB client connection issue in IPv4 or dual-stack setups while using IPv4 sockets, 
+            #  remove the following configuration options:
+            #  1) --conf-bind-address=::
+            #  2) --conf-set-option=http_server.bind_address=::
+            #
+            bootstrapOptions:
+              - "--conf-set-option=DEFAULT.ssl_cipher=ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256"
+              - "--conf-bind-address=::"
+              - "--conf-set-option=http_server.bind_address=::"
           # rootSecret is for configuring name of the secret containing the credentials of root user of the Database
           # Required
           # The Password should be stored in the following (Key: Value) pairs in the secret
@@ -394,24 +409,23 @@ spec:
           #   rootHost: host of the db
           #   rootPassword: password of the root user
           rootSecret: &rootSecretName "root-user"
-        # This is the OCIObject Storage required to be configured in order to enable encryption
-        # oci:
-        #   user: "ocid1.user.oc1..."
-        #   keySecret: "oci-credentials"
-        #   keyFingerprint: ""
-        #   tenancy: "ocid1.tenancy.oc1..."
-        #   compartment: "ocid1.compartment.oc1..."
-        #   virtualVault: "ocid1.vault.oc1.."
-        #   masterKey: "ocid1.key.oc1..."
-        #   caCertificate: ""
-        #   endpoints:
-        #     encryption: "<identifier>-crypto.kms.<region>.oraclecloud.com"
-        #     management: "<identifier>-management.kms.<region>.oraclecloud.com"
-        #     vaults: "vaults.<region>.oci.oraclecloud.com"
-        #     secrets: "secrets.vaults.<region>.oci.oraclecloud.com"
-
+          # This is the OCIObject Storage required to be configured in order to enable encryption
+          # oci:
+          #   user: "ocid1.user.oc1..."
+          #   keySecret: "oci-credentials"
+          #   keyFingerprint: ""
+          #   tenancy: "ocid1.tenancy.oc1..."
+          #   compartment: "ocid1.compartment.oc1..."
+          #   virtualVault: "ocid1.vault.oc1.."
+          #   masterKey: "ocid1.key.oc1..."
+          #   caCertificate: ""
+          #   endpoints:
+          #     encryption: "<identifier>-crypto.kms.<region>.oraclecloud.com"
+          #     management: "<identifier>-management.kms.<region>.oraclecloud.com"
+          #     vaults: "vaults.<region>.oci.oraclecloud.com"
+          #     secrets: "secrets.vaults.<region>.oci.oraclecloud.com"
         ##################################################################################
-        # Start of Backup and Recovery Parameters
+        # Start of Backup Parameters
         ##################################################################################
 
         # # Start configuration for periodic backup
@@ -447,15 +461,27 @@ spec:
         #   # Name of the backup schedule
         #   # Required
         # - name: ""
-        #   # The schedule of the job, in a cron expression syntax
-        #   # Required
-        #   schedule: ""
+        #   # The schedule of the job, in a cron expression syntax. Example: "*/30 * * * *" (every 30 minutes)
+        #   # Format: [Minute] [Hour] [Day of Month] [Month] [Day of Week]
+        #   # Required, default - run every hour ("0 * * * *").
+        #   schedule: "0 * * * *"
         #   # Name of the backupProfile to be used
         #   # Required
         #   backupProfileName: ""
         #   # Whether the schedule is enabled or not
         #   # Optional, default - true
         #   enabled: true 
+
+        ##################################################################################
+        # End of Backup Parameters
+        ##################################################################################
+
+        ##################################################################################
+        # Start of Restore Parameters
+        ##################################################################################
+        # IMPORTANT: The restore section (initDB) is intended ONLY for Disaster Recovery during initial 'helm install'.
+        # Uncomment and configure this section for helm install when you need to initialize/restore the database.
+        # Keep this section COMMENTED OUT for 'helm upgrade' operations; enabling it during upgrade will cause errors.
 
         # # Start configuration for restore
         # # Database initialization instructions
@@ -483,7 +509,7 @@ spec:
         #       endpoint: ""
 
         ##################################################################################
-        # End of Backup and Recovery Parameters
+        # End of Restore Parameters
         ##################################################################################
 
         ##################################################################################
@@ -767,12 +793,7 @@ spec:
               # Optional; Default: 0.5Gi
               initServiceMemory: 0.5Gi
           # service configuration of IAM Gateway pod
-          enableIncomingHttp1: true
           service:
-            type: NodePort
-            staticNodePortEnabled: true
-            staticHttp1NodePort: 31821
-            staticHttpsNodePort: 32654
             # publicHttpsSignalingPort specifies port used for HTTPS/1.0 (secured SSL)
             # Optional; Default: 443
             publicHttpsSignalingPort: *iamIgwPort
@@ -900,29 +921,23 @@ spec:
           # Optional
           resources: *igwResources
           # service configuration of Core Gateway pod
-
-          enableIncomingHttp1: true
           service:
-            type: NodePort
-            staticNodePortEnabled: true
-            staticHttp1NodePort: 30080
-            staticHttpsNodePort: 30081
             # publicHttpsSignalingPort specifies port used for HTTPS/1.0 (secured SSL)
             # Optional; Default: 443
             publicHttpsSignalingPort: *coreIgwPort
-            # staticIpAddress configures IP Address to be used by IAM Gateway
+            # staticIpAddress configures IP Address to be used by Core Gateway
             # Required
             staticIpAddress: *coreIgwIp
             # ssl is for configuring HTTPS related configuration
             # Required
             ssl: *sslConfig
-          # log is for configuring log level of IAM Gateway
+          # log is for configuring log level of Core Gateway
           log:
             # level specifies log level of processes
             level:
               # root specifies log level for all processes
               # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
-              root: "DEBUG"
+              root: "WARN"
               # ingress specifies log level for main application process
               # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: WARN
               ingress: "WARN"
@@ -937,8 +952,12 @@ spec:
                 # security specifies log level of security logs
                 # Optional; Allowed values: ERROR, WARN, INFO, DEBUG, TRACE; Default: INFO
                 security: "INFO"
+            filters:
+              - headerName: "Host"
+                headerValues: []
           # Console configuration of Core Gateway
           console:
+            securityLogEnabled: false
             # Core Configuration
             core:
               # Session Timeout
@@ -1084,6 +1103,89 @@ spec:
         ##################################################################################
         #
         # End of Console GUI Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Console Grafana Dashboard Parameters
+        #
+        ##################################################################################
+
+        # cnsbc-dashboard sub-chart is responsible for deploying Grafana dashboards for Console.
+        # It supports both ConfigMap-based and Grafana CR-based dashboard deployment mechanisms.
+        cnsbc-dashboard-console:
+          # labels: A map of additional labels to apply to all top-level Kubernetes resources
+          # created by this Helm chart (e.g., Deployments, Services, ConfigMaps).
+          labels: {}
+          # annotations: A map of additional annotations to apply to all top-level Kubernetes resources
+          # created by this Helm chart.
+          annotations: {}
+          dashboard:
+            # helmDeployment: A boolean flag to control whether dashboards should be deployed
+            # as part of the Helm release. If set to 'true', it enables generation of dashboard resources.
+            # Optional; Allowed values: true, false; Default: true
+            helmDeployment: true
+            # grafanaDashboard: Configuration specific to GrafanaDashboard Custom Resource-based deployments.
+            grafanaDashboard:
+              # enable: Flag to enable creation of GrafanaDashboard CRs via Grafana Operator.
+              # Optional; Allowed values: true, false; Default: true
+              enable: false
+              # instanceSelector: Defines the label selector to map dashboards to a specific Grafana instance.
+              # Required when using Grafana CR-based dashboard deployment.
+              # Example:
+              # instanceSelector:
+              #   matchLabels:
+              #     # This should match the labels configured in the target Grafana instance CR.
+              #     dashboard: cnsbc
+              instanceSelector: {}
+              # resyncPeriod: Time interval for the Grafana Operator to resync dashboard state.
+              # Optional; Default: 30s; Units: Seconds
+              resyncPeriod: 30s
+            # configMap: Configuration specific to ConfigMap-based dashboard deployments.
+            configMap:
+              # enable: If true, dashboards will be created as ConfigMaps instead of GrafanaDashboard CRs.
+              # Optional; Allowed values: true, false; Default: false
+              enable: true
+              # dashboardSelector: Label used by Grafana to detect dashboard ConfigMaps.
+              # Optional; Required if enable is true
+              # Example:
+              # dashboardSelector:
+              #   grafana_dashboard: "1"
+              dashboardSelector: {}
+        ##################################################################################
+        #
+        # End of Console Grafana Dashboard Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc-console-alerts Parameters
+        #
+        ##################################################################################
+        cnsbc-console-alerts:
+          # This parameter is to disable all the alerts
+          # Optional;
+          # If it is set to true all the below alerts would not apply
+          # Default value for the parameter is set to false
+          disableAllAlerts: false
+          # Following is the template for the configuration parameters
+          # All of the parameters are Optional and filled with default values
+          # <Alert-Name>:
+          #   - enabled: true/false                      # Set it false to disable an alert and true to enable it, default is enabled
+          #     severity: warning/minor/major/critical   # Severity value for an alert, default value of warning/minor/major/critical is provided for each alert
+          #     thresholds:                              # Contains key value pair containing thresholds configurable for an alert, if it is not present then threshold is not configurable
+          #       <Threshold name>: <value>              # Uses this to edit threshold of an alert, it is provided for alerts with configurable threshold, additional thresholds can not be added
+          #     for: <value>                             # Controls 'for' value in an alert rule, it is an optional parameter and not present for all alerts
+          #     additionalLabels: {}                     # Additional Labels can be added using this field, provide label in the form of key value pair
+          #     additionalAnnotations: {}                # Additional Annotations can be added using this field, provide annotation in the form of key value pair
+          # Edit the below values to modify the default values in alerting rules
+          alerts: {}
+          # Alerts values are provided in cnsbc-console-alerts-values.yaml
+        ##################################################################################
+        #
+        # End of cnsbc-console-alerts Parameters
         #
         ##################################################################################
 

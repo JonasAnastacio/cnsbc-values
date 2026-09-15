@@ -5,7 +5,7 @@ metadata:
   namespace: argocd
   labels:
     automated: ""
-    ocadmInstanceId: "6a59aedbc7021aa7b0cdd106"
+    ocadmInstanceId: "6aa8eff034808551a79c27a2"
     ocadmInstanceType: cnsbc
     ocadmDeploymentMode: argocd
     ocadmHelmRelease: "ocadm-cnsbc-application"
@@ -75,109 +75,54 @@ spec:
           # Example:
           # watchNamespaces: "NS1,NS2"
           watchNamespaces: "ocadm-cnsbc"
+          # Openstack based CNE systems requires cloud-specific metadata to be supplied.
           # cloud contains cloud-specific metadata
           cloud:
             # type specifies the type of cloud environment
-            # Optional; Allowed Value: "openstack"; Default: "openstack"
-            type: "openstack"
+            # Required; Allowed Values:
+            # "openstack" for OpenStack CNE deployments that use the cnSBC vnicset operator to attach additional VNICs to the Pod
+            # "" for non-OpenStack CNE and OpenStack CNE deployments that use Multus for vnic attachments to the Pod
+            type: ""
             # metadata contains details necessary for connecting to the cloud environment
             # cloud provider details can be found from openstack openrc file
+            # Required only if cloud type = openstack, otherwise ignored
             metadata:
               # authUrl is the authentication URL for the cloud service
               # Required;
               # Example:
               # authUrl: "http://burling-devtest-cloud-ctrl.us.oracle.com:5000/v3"
-              authUrl: "http://10.133.97.20:5000"
+              authUrl: http://10.133.97.20:5000
               # domainName is the domain name used for authentication
               # Required;
               # Example: 
               # domainName: "LDAP"
-              domainName: "Default"
+              domainName: Default
               # projectID is the unique identifier for the cloud project
               # Required;
               # Example: 
               # projectID: "b06b25586f544629a90fa943c1b0f51b"
-              projectID: "8f27e7b2f6d548ca94c95c1c98b76e8b"
+              projectID: 8f27e7b2f6d548ca94c95c1c98b76e8b
               # projectName is the name of the cloud project
               # Required;
               # Example: 
               # projectName: "Nova"
-              projectName: "network-demos"
+              projectName: network-demos
               # regionName is the region of the cloud service
               # Required;
               # Example: 
               # regionName: "RegionOne"
-              regionName: "RegionOne"
-              # networks is a list of network configurations
-              # - name: The name of the network (Required)
-              #   networkid: The unique ID of the network (Required)
-              #   subnetid: The unique ID of the subnet (Required)
-              #   type: Specifies the vNIC type, either "pv" (normal) or "vf" (direct) (Required)
-              #   cidr: The CIDR block for the network (Required)
-              #   secgroup: (Optional) A list of security group IDs associated with the network.
-              #             If not provided, the security group(s) specified in the CNSBC Application custom resource will be used.
-              #             If both are omitted, the default security group will be used.
-              #   vips: (Optional) A list of VIP ranges for reservation. If not provided, the operator will not reserve any VIPs.
-              #   - start: The start IP of the VIP range
-              #     end: The end IP of the VIP range
-              # 
-              # The operator performs VIP reservation for the ranges specified in the 'networks[*].vips'
-              # To disable VIP reservation for a specific network/subnet, omit the 'networks[*].vips' field
-              # When VIP reservation is disabled here, you can reserve VIP ranges using the allocation pools of a network/subnet 
-              # on the cloud provider, which is the preferred method to avoid redundant configurations.
-              # 
-              # The example below illustrates a configuration with VIP reservation disabled:
-              # networks:
-              # - name: "nebula_nw209"
-              #   networkid: "4df6b3b6-cc02-4d3e-b557-8039eeb88da3"
-              #   subnetid: "2724c073-ddb2-4d5b-8bb4-dacad374a5c9"
-              #   type: "vf"
-              #   cidr: "10.1.209.0/24"
-              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"]
-              # - name: "nebula_nw210"
-              #   networkid: "57013351-e8b0-49d4-98fd-acf538dda01d"
-              #   subnetid: "a1ef6867-dc03-4633-b8ea-1c0f20f2607c"
-              #   type: "vf"
-              #   cidr: "10.1.210.0/24"
-              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"]
-              # 
-              # The following example shows a configuration with VIP reservation enabled.
-              # The 'networks[*].vips' field is included to specify the range of IPs to be reserved.
-              # 
-              # networks:
-              # - name: "nebula_nw209"
-              #   networkid: "4df6b3b6-cc02-4d3e-b557-8039eeb88da3"
-              #   subnetid: "2724c073-ddb2-4d5b-8bb4-dacad374a5c9"
-              #   type: "vf"
-              #   cidr: "10.1.209.0/24"
-              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"] 
-              #   vips:
-              #   - start: "10.1.209.200"
-              #     end: "10.1.209.250"
-              # - name: "nebula_nw210"
-              #   networkid: "57013351-e8b0-49d4-98fd-acf538dda01d"
-              #   subnetid: "a1ef6867-dc03-4633-b8ea-1c0f20f2607c"
-              #   type: "vf"
-              #   cidr: "10.1.210.0/24"
-              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"] 
-              #   vips:
-              #   - start: "10.1.210.200"
-              #     end: "10.1.210.250"
+              regionName: RegionOne
               networks:
-                - name: "cnsbc_net"
-                  networkid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
-                  subnetid: "44b4edee-3a11-45c2-bc11-5571421b1942"
-                  type: "pv"
-                  cidr: "11.0.2.0/24"
-                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
-                  vips:
-                    - start: "11.0.2.5"
-                      end: "11.0.2.50"
+                - name: cnsbc_net
+                  networkid: e671bbc1-fdaf-4c96-b54a-5cd7e3096112
+                  subnetid: 44b4edee-3a11-45c2-bc11-5571421b1942
+                  type: pv
+                  cidr: 11.0.2.0/24
           # log configures the logging settings for the CNSBC Application and CNSBC Vnicset operators
           log:
             # level sets the logging level
             # Optional; Allowed Values: Fatal, Error, Warn, Info, Debug, Trace; Default: Info
-            level: "Debug"
+            level: "Info"
             # verbosityLevel sets the level of detail in the logs
             # "high" includes additional context such as line number, function name, and filename
             # Optional; Allowed Values: high, low; Default: high
@@ -277,6 +222,20 @@ spec:
           # if set, both following annotations and global annotations applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+          # securityContext specifies the security context configuration for the Operator container.
+          # Optional;
+          # Example:
+          #   securityContext:
+          #     runAsUser: 1000
+          # Specific to OpenShift clusters: 
+          # If the cluster has any SCC (Security Context Constraints) configured that 
+          # allows only specific range of values for the runAsUser parameter, 
+          # configure the runAsUser parameter within the allowed range
+          # Reference: https://docs.openshift.com/container-platform/4.14/authentication/managing-security-context-constraints.html
+          securityContext:
+            # runAsUser specifies the user ID to run the container as.
+            # Optional; Default: 1000
+            runAsUser: 1000
         ##################################################################################
         #
         # End of Cloud Native SBC Application Operator Parameters
@@ -289,6 +248,11 @@ spec:
         #
         ##################################################################################
         cnsbcvnicset-operator:
+          # enabled enable or disable cnsbc vnicset operator chart
+          # disable it for non-OpenStack CNE systems and OpenStack CNE systems that use Multus
+          # enable it for OpenStack CNE systems that use the cnSBC vnicset operator to attach additional VNICs to the Pod
+          # Required; Allowed Values: true, false; Default: false
+          enabled: false
           # serviceAccount defines the service account to be created and assigned RBAC roles
           serviceAccount:
             # create specifies whether a service account should be created
@@ -382,6 +346,11 @@ spec:
           # Units: "ns", "us" (or "µs"), "ms", "s", "m" and "h"
           # Impact: Setting a longer delay can slow down operations; shorter delays may increase system load
           requeueDelay: "5000ms"
+          # crictlConfigFile defines the path to the crictl configuration file on Kubernetes nodes, which can be customized by the user.
+          # Optional; Default: ""
+          # If specified, that path will be used for the crictl configuration file. This allows users to choose a custom location for the crictl config file.
+          # If set to an empty string "", the script defaults to using /etc/crictl.yaml or $HOME/.crictl.yaml.
+          crictlConfigFile: ""
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
@@ -414,6 +383,20 @@ spec:
           # if set, both following annotations and global annotations applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+          # securityContext specifies the security context configuration for the Operator container.
+          # Optional;
+          # Example:
+          #   securityContext:
+          #     runAsUser: 1000
+          # Specific to OpenShift clusters: 
+          # If the cluster has any SCC (Security Context Constraints) configured that 
+          # allows only specific range of values for the runAsUser parameter, 
+          # configure the runAsUser parameter within the allowed range
+          # Reference: https://docs.openshift.com/container-platform/4.14/authentication/managing-security-context-constraints.html
+          securityContext:
+            # runAsUser specifies the user ID to run the container as.
+            # Optional; Default: 1000
+            runAsUser: 1000
         ##################################################################################
         #
         # End of Cloud Native SBC VNICSet Operator Parameters
@@ -486,10 +469,8 @@ spec:
           globalAnnotations: {}
           # securityContext specifies the security context configuration for the Operator container.
           # Optional;
-          # This configuration allows running the container as a non-root user
           # Example:
           #   securityContext:
-          #     runAsNonRoot: true
           #     runAsUser: 1000
           # Specific to OpenShift clusters: 
           # If the cluster has any SCC (Security Context Constraints) configured that 
@@ -497,9 +478,6 @@ spec:
           # configure the runAsUser parameter within the allowed range
           # Reference: https://docs.openshift.com/container-platform/4.14/authentication/managing-security-context-constraints.html
           securityContext:
-            # runAsNonRoot indicates whether the container should run as a non-root user.
-            # Optional; Default: true
-            runAsNonRoot: true
             # runAsUser specifies the user ID to run the container as.
             # Optional; Default: 1000
             runAsUser: 1000
@@ -527,11 +505,6 @@ spec:
           # Optional; Default: "coherence-operator"
           # If not set, the default name used is "coherence-operator".
           serviceAccountName: "coherence-operator"
-          # webhooks controls whether the Coherence Operator registers admission web-hooks for the Coherence resource
-          # Optional; Default: true
-          # If set to false, invalid Coherence resources may be installed in the Kubernetes cluster
-          # This can cause errors when the Operator reconciles them or create invalid Kubernetes resources
-          webhooks: true
         ##################################################################################
         #
         # End of Coherence Operator Parameters
@@ -570,6 +543,16 @@ spec:
               # secretName specifies the name of the secret used for image pulling
               # Dependencies: Mandatory if 'enabled' is true
               secretName: ""
+          # resources defines the resource limits and requests for the MySQL Operator container
+          resources:
+            # limits specifies the maximum amount of resources the container can use
+            limits:
+              cpu: 1
+              memory: "1.5Gi"
+            # requests specifies the minimum amount of resources the container needs
+            requests:
+              cpu: 0.25
+              memory: "256Mi"
           # envs contains environment values applicable to the innodb-cluster deployment
           # The mysql-operator generates the manifests for deploying the 
           # innodb-cluster instances. These env values are used in those manifests.
@@ -587,6 +570,23 @@ spec:
             # k8sClusterDomain is the Kubernetes cluster domain name forming the MySQL service FQDN
             # Optional; Default: cluster.local
             k8sClusterDomain: "cluster.local"
+          # deployment contains metadata customizations for the mysql-operator Deployment
+          # and the pod template it creates.
+          # These values are applied to the operator Deployment resource itself and to
+          # the operator pods, and do not affect the generated innodb-cluster resources.
+          deployment:
+            # deploymentAnnotations adds annotations to the mysql-operator Deployment metadata
+            # Optional;
+            deploymentAnnotations: {}
+            # deploymentLabels adds labels to the mysql-operator Deployment metadata
+            # Optional;
+            deploymentLabels: {}
+            # podAnnotations adds annotations to the mysql-operator pod template metadata
+            # Optional;
+            podAnnotations: {}
+            # podLabels adds labels to the mysql-operator pod template metadata
+            # Optional;
+            podLabels: {}
           # disableLookups determines if Helm will contact the Kubernetes API during template rendering
           # Optional; Allowed-values: true, false; Default: false
           # Note: 
@@ -597,6 +597,225 @@ spec:
         ##################################################################################
         #
         # End of MySQL Operator Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of Cloud Native SBC Backup-Restore Operator Parameters
+        #
+        ##################################################################################
+        cnsbcapp-backuprestore-operator:
+          # serviceAccount defines the service account to be created and assigned RBAC roles
+          serviceAccount:
+            # create specifies whether a service account should be created
+            # Optional; Allowed Values: true, false; Default: true
+            create: true
+            # name specifies the name of the service account to use
+            # Optional;
+            # Note:
+            #   1. If `name` is not set and `create` is true, the name will be generated
+            #   2. If `name` is set and `create` is false, the provided service account name will be used
+            #   3. If `name` is set and `create` is true, a new service account with the provided name will be created
+            name: ""
+          # controller contains cnsbcapp-backuprestore-operator controller specific parameters
+          controller:
+            # image provides details for the cnsbcapp-backuprestore-operator controller image
+            image:
+              # registry specifies the container registry where the cnsbcapp-backuprestore-operator image is hosted
+              # Required;
+              registry: ""
+              # repositoryPrefix specifies the path within the registry for the cnsbcapp-backuprestore-operator image
+              # Required if 'global.repositoryPrefix' is not configured
+              repositoryPrefix: ""
+              # name specifies the name of the image in the registry
+              # Optional; Default: cnsbcapp-backuprestore-operator
+              name: "cnsbcapp-backuprestore-operator"
+              # tag specifies the version of the cnsbcapp-backuprestore-operator image
+              # Optional;
+              tag: ""
+              # pullPolicy defines the image pull policy for the cnsbcapp-backuprestore-operator controller image
+              # Optional; Allowed-Values: Always, IfNotPresent, Never; Default: Always
+              pullPolicy: "Always"
+          # environment variables
+          envs:
+            # k8sClusterDomain is the Kubernetes cluster domain name forming the service FQDN
+            # Optional; Default: cluster.local
+            k8sClusterDomain: "cluster.local"
+          # enableWebhooks controls whether the BackupRestore Operator registers admission web-hooks for the CnsbcAppBackup
+          # and CnsbcAppRestore resource.
+          # If this is set to false, then it will be possible to install invalid CnsbcAppBackup and CnsbcAppRestore resource 
+          # into the Kubernetes cluster, that may cause errors when the Operator tries to reconcile them,
+          # or worse the Operator may create other invalid Cnsbc resources that fail to run.
+          enableWebhooks: true
+          # Start of https parameters sub section
+          https:
+            k8sClient:
+              # allowSelfSignedCertificates is a flag to allow or disallow self-signed k8s server end-entity certificate.
+              # When set to "false", self-signed k8s server certificate will be rejected during TLS handshake.
+              # When set to "true", self-signed k8s server certificate will be allowed during TLS handshake.
+              # Optional; Allowed Values: true, false; Default: false
+              allowSelfSignedCertificates: false
+          # End of https parameters sub section
+
+          # nodeSelector is the node labels for pod assignment
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
+          # nodeSelector:
+          #   kubernetes.io/hostname: node1
+          nodeSelector: {}
+          # affinity controls Pod scheduling preferences.
+          # Optional;
+          # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+          affinity: {}
+          # tolerations is for nodes that have taints on them.
+          # Optional;
+          # Useful if you want to dedicate nodes to just run the cnsbcapp-backuprestore-operator
+          # For example:
+          # tolerations:
+          #   - key: "key"
+          #     operator: "Equal"
+          #     value: "value"
+          #     effect: "NoSchedule"
+          #
+          # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+          tolerations: []
+          # labels add extra labels to all the cnsbcapp operator resources
+          # Optional;
+          # if set, both following labels and global labels applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations add annotations to all the cnsbcapp operator resources
+          # Optional;
+          # if set, both following annotations and global annotations applied
+          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+          # securityContext specifies the security context configuration for the Operator container.
+          # Optional;
+          # Example:
+          #   securityContext:
+          #     runAsUser: 1000
+          # Specific to OpenShift clusters: 
+          # If the cluster has any SCC (Security Context Constraints) configured that 
+          # allows only specific range of values for the runAsUser parameter, 
+          # configure the runAsUser parameter within the allowed range
+          # Reference: https://docs.openshift.com/container-platform/4.14/authentication/managing-security-context-constraints.html
+          securityContext:
+            # runAsUser specifies the user ID to run the container as.
+            # Optional; Default: 1000
+            runAsUser: 1000
+        ##################################################################################
+        #
+        # End of Cloud Native SBC Backup-Restore Operator Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc-operator-alerts Parameters
+        #
+        ##################################################################################
+        cnsbc-operator-alerts:
+          # disableAllAlerts is a flag to enable or disable all the alerts
+          # When set to "false," all of the following alerts will be applicable.
+          # When set to "true," all of the following alerts will not be applicable.
+          # Optional; Allowed Values: true, false; Default: false
+          disableAllAlerts: false
+          # disableVnicsetAlerts is a flag to enable or disable vnicset operator specific alerts
+          # When set to "false," all of the vnicset alerts will be applicable.
+          # When set to "true," all of the vnicset alerts will not be applicable.
+          # Optional; Allowed Values: true, false; Default: false
+          # On non-OpenStack clusters, set disableVnicsetAlerts to true, as the vnicset operator shall be disabled, and so shall its associated alerts
+          # If `disableAllAlerts` set to true and `disableVnicsetAlerts` set to false
+          # the vnicset alerts are disabled
+          # If `disableAllAlerts` set to true or false and `disableVnicsetAlerts` set to true then
+          # the vnicset alerts are disabled
+          disableVnicsetAlerts: false
+          # Following is the template for the configuration parameters
+          # All of the parameters are Optional and filled with default values
+          # <Alert-Name>:
+          #   - enabled: true/false                      # Set it false to disable an alert and true to enable it, default is enabled
+          #     severity: warning/minor/major/critical   # Severity value for an alert, default value of warning/minor/major/critical is provided for each alert
+          #     thresholds:                              # Contains key value pair containing thresholds configurable for an alert, if it is not present then threshold is not configurable
+          #       <Threshold name>: <value>              # Uses this to edit threshold of an alert, it is provided for alerts with configurable threshold, additional thresholds can not be added
+          #     for: <value>                             # Controls 'for' value in an alert rule, it is an optional parameter and not present for all alerts
+          #     additionalLabels: {}                     # Additional Labels can be added using this field, provide label in the form of key value pair
+          #     additionalAnnotations: {}                # Additional Annotations can be added using this field, provide annotation in the form of key value pair
+          alerts: {}
+          # Alerts values are provided in cnsbc-operator-alerts-values.yaml
+        ##################################################################################
+        #
+        # End of cnsbc-operator-alerts Parameters
+        #
+        ##################################################################################
+
+        ##################################################################################
+        #
+        # Start of cnsbc Operator Dashboard Parameters
+        #
+        ##################################################################################
+
+        # Configurations passed to cnsbc-dashboard subchart
+        cnsbc-dashboard-operator:
+          # labels: A map of additional labels to apply to CNSBC-Operator dashboard resources
+          # created by this Helm chart (e.g. Grafana CR, ConfigMaps).
+          # Optional; ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+          labels: {}
+          # annotations: A map of additional annotations to apply CNSBC-Operator dashboard resources
+          # created by this Helm chart.
+          # Optional; ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+          annotations: {}
+          dashboard:
+            # helmDeployment controls whether this chart renders and deploys CNSBC-Operator dashboard resources.
+            # When set to "true", CNSBC-Operator dashboard manifests will be generated and installed.
+            # When set to "false", no CNSBC-Operator dashboard resources will be created by this chart.
+            # Optional; Allowed Values: true, false; Default: true
+            # Impact: If disabled, CNSBC-Operator dashboards must be provisioned by another mechanism or chart.
+            helmDeployment: true
+            # grafanaDashboard: Configuration specific to GrafanaDashboard Custom Resource-based deployments.
+            # grafanaDashboard contains configuration for deploying CNSBC-Operator dashboards using the Grafana Operator
+            # via GrafanaDashboard custom resources (CRs).
+            # Note: Use exactly one deployment method: either grafanaDashboard.enable (Grafana Operator) or configMap.enable (ConfigMap).
+            grafanaDashboard:
+              # enable controls creation of GrafanaDashboard CRs for CNSBC-Operator dashboards.
+              # Optional; Allowed Values: true, false; Default: true
+              # Dependencies: Requires Grafana Operator CRDs to be installed and a target Grafana instance managed by the Operator.
+              # Impact: When enabled, CNSBC-Operator dashboards are reconciled by the Grafana Operator and updated automatically on changes.
+              enable: false
+              # instanceSelector specifies the label selector that associates GrafanaDashboard CRs with a target Grafana instance.
+              # Required when 'grafanaDashboard.enable' is true; ignored otherwise.
+              # Example:
+              #   instanceSelector:
+              #     matchLabels:
+              #       # Must match labels defined on the target Grafana instance (Grafana CR), not the Pod/Deployment.
+              #       dashboard: "cnsbc"
+              # Impact: If the selector does not match any Grafana instance, dashboards will not be imported.
+              instanceSelector: {}
+              # resyncPeriod specifies how frequently the Grafana Operator reconciles dashboard resources.
+              # Optional; Default: 30s; Units: s
+              # Impact: Lower values increase reconciliation frequency and Operator load; higher values may delay dashboard updates.   
+              resyncPeriod: 30s
+            # configMap contains configuration for deploying CNSBC-Operator dashboards as Kubernetes ConfigMaps
+            # for Grafana to discover via sidecar or file provisioning.
+            # Note: Use exactly one deployment method: either grafanaDashboard.enable (Grafana Operator) or configMap.enable (ConfigMap).
+            configMap:
+              # enable controls creation of CNSBC-Operator dashboard ConfigMaps instead of GrafanaDashboard CRs.
+              # Optional; Allowed Values: true, false; Default: false
+              # Dependencies: Grafana must be configured to load dashboards from ConfigMaps (e.g., via sidecar/provisioning)
+              # and watch a specific label (see 'dashboardSelector').
+              # Impact: Does not require Grafana Operator; updates are picked up based on Grafana's sidecar/provisioning settings.
+              enable: true
+              # dashboardSelector defines the label(s) applied to each dashboard ConfigMap so Grafana can discover and import it.
+              # Required when 'configMap.enable' is true; ignored otherwise.
+              # Example:
+              #   dashboardSelector:
+              #     grafana_dashboard: "1"
+              # Dependencies: Ensure your Grafana deployment is configured to watch the same label key/value.
+              # Impact: If labels do not match Grafana’s watch configuration, dashboards will not be imported.
+              dashboardSelector: {}
+        ##################################################################################
+        #
+        # End of cnsbc Operator Dashboard Parameters
         #
         ##################################################################################
 
