@@ -362,7 +362,7 @@ spec:
               # tag initContainer image tag
               # Required;
               # Immutable: No
-              tag: ""
+              tag: "26.0.3"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -388,7 +388,7 @@ spec:
               # tag is the version number of the image in the registry
               # Required;
               # Immutable: No
-              tag: ""
+              tag: "14.1.2.0.4"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -416,7 +416,7 @@ spec:
               # tag is the version number of the image in the registry
               # Required;
               # Immutable: No
-              tag: ""
+              tag: "26.0.3"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -512,10 +512,11 @@ spec:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
             vnics:
-              - name: net0
-                network-name: cnsbc_net
-                vips:
-                  - 11.0.2.10
+              openstack:
+                - name: net0
+                  network-name: cnsbc_net
+                  vips:
+                    - 11.0.2.10
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management policy:
           # - The total core count assigned to the container must be a multiple of the SMT threads per physical core.
           #   For example, with 2 threads per core, the total CPU count must be a multiple of 2.
@@ -813,10 +814,11 @@ spec:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
             vnics:
-              - name: net0
-                network-name: cnsbc_net
-                vips:
-                  - 11.0.2.11
+              openstack:
+                - name: net0
+                  network-name: cnsbc_net
+                  vips:
+                    - 11.0.2.11
           # On SMT-enabled systems with 'full-pcpu-only' set in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, valid total core counts are multiples of 2.
@@ -1092,10 +1094,11 @@ spec:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
             vnics:
-              - name: net0
-                network-name: cnsbc_net
-                vips:
-                  - 11.0.2.12
+              openstack:
+                - name: net0
+                  network-name: cnsbc_net
+                  vips:
+                    - 11.0.2.12
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, total CPUs must be a multiple of 2.
@@ -1351,7 +1354,7 @@ spec:
               # tag is the version number of the image in the registry
               # Optional;
               # Immutable: No
-              tag: ""
+              tag: "26.0.3"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
@@ -1360,13 +1363,13 @@ spec:
               # image cnsbc-config image
               image:
                 # cnsbc-config image registry
-                registry: *imgRegRef
+                registry: image-registry.openshift-image-registry.svc:5000
                 # cnsbc-config image path
-                repository: ""
+                repository: "cnsbc"
                 # name of the image
                 name: "backup-restore-agent"
                 # Provide a value if you need to override the image tag, which otherwise defaults to the chart appVersion.
-                tag: ""
+                tag: "26.0.3"
                 # pullPolicy specify a imagePullPolicy - Possible Values are:- Always, IfNotPresent, Never
                 pullPolicy: "Always"
             # resources for cnsbc-configuration-manager container
