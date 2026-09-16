@@ -362,7 +362,7 @@ spec:
               # tag initContainer image tag
               # Required;
               # Immutable: No
-              tag: "8-slim"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -388,7 +388,7 @@ spec:
               # tag is the version number of the image in the registry
               # Required;
               # Immutable: No
-              tag: "14.1.2.0.1"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -416,7 +416,7 @@ spec:
               # tag is the version number of the image in the registry
               # Required;
               # Immutable: No
-              tag: "4.0.1"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No

@@ -104,7 +104,6 @@ spec:
           image:
             registry: image-registry.openshift-image-registry.svc:5000
             name: cnsbc/coherence-operator
-            tag: 3.5.2
           watchNamespaces: ocadm-cnsbc
         mysql-operator:
           image:
