@@ -18,7 +18,7 @@ spec:
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-operator
-    targetRevision: "25.1.1"
+    targetRevision: "26.0.3"
     helm:
       releaseName: ocadm-cnsbc-operator
       values: |

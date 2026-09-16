@@ -22,7 +22,7 @@ spec:
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-console
-    targetRevision: "25.1.1"
+    targetRevision: "26.0.3"
     helm:
       releaseName: ocadm-cnsbc-console
       values: |
@@ -197,7 +197,7 @@ spec:
               name: "helm-test"
               # tag of the image
               # Required
-              tag: "25.1.1"
+              tag: "26.0.3"
               # pullPolicy specifies an imagePullPolicy.
               # Optional; Allowed values: "Always", "IfNotPresent", "Never"; Default: "Always"
               pullPolicy: *pullPolicyRef

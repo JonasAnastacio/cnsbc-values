@@ -28,7 +28,7 @@ spec:
   source:
     repoURL: https://chartmuseum-helm-repository.apps.ocp1.cgiunet
     chart: cnsbc-application
-    targetRevision: "25.1.1"
+    targetRevision: "26.0.3"
     helm:
       releaseName: ocadm-cnsbc-application
       values: |
@@ -436,7 +436,7 @@ spec:
               name: "rsync"
               # tag is the version number of the image in the registry
               # Required;
-              tag: "25.1.1"
+              tag: "26.0.3"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               pullPolicy: "Always"
@@ -481,7 +481,7 @@ spec:
               # tag is the version number of the image in the registry
               # Optional;
               # Immutable: No
-              tag: "25.1.1"
+              tag: "26.0.3"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -593,7 +593,7 @@ spec:
               # tag is the version number of the image in the registry
               # Required when accounting is enabled
               # Immutable: No
-              tag: "25.1.1"
+              tag: "26.0.3"
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
@@ -1833,7 +1833,7 @@ spec:
             # tag is the version number of the image in the registry
             # Required;
             # Immutable: No
-            tag: "25.1.1"
+            tag: "26.0.3"
             # pullPolicy specify a imagePullPolicy
             # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
             # Immutable: No
