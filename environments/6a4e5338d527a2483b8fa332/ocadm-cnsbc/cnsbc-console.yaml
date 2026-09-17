@@ -81,7 +81,7 @@ spec:
               configMgr:
                 # host name of the service (Use the service which has 'rest' as suffix)
                 # Required
-                host: "ocadm-cnsbc-application-config-service-rest"
+                host: "ocadm-cnsbc-application-cnsbc-configuration-manager-rest"
                 # Port used by the service
                 # Optional; Default: 80
                 port: "8080"
