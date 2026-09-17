@@ -725,7 +725,17 @@ spec:
           # if set, only following affinity is applied and global affinity ignored
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           # Immutable: No
-          affinity: {}
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node-role.kubernetes.io/worker
+                        operator: Exists
+                      - key: node-role.kubernetes.io/master
+                        operator: DoesNotExist
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: DoesNotExist
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
@@ -913,7 +923,17 @@ spec:
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           # This value affects both mediaDatabase and media pods
           # Immutable: No
-          affinity: {}
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node-role.kubernetes.io/worker
+                        operator: Exists
+                      - key: node-role.kubernetes.io/master
+                        operator: DoesNotExist
+                      - key: node-role.kubernetes.io/control-plane
+                        operator: DoesNotExist
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
