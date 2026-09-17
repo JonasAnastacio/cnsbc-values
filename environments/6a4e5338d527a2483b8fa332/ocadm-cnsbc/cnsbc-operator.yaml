@@ -37,33 +37,92 @@ spec:
               # Required;
               # Example:
               # authUrl: "http://burling-devtest-cloud-ctrl.us.oracle.com:5000/v3"
-              authUrl: http://10.133.97.20:5000
+              authUrl: "http://10.133.97.20:5000"
               # domainName is the domain name used for authentication
               # Required;
               # Example: 
               # domainName: "LDAP"
-              domainName: Default
+              domainName: "Default"
               # projectID is the unique identifier for the cloud project
               # Required;
               # Example: 
               # projectID: "b06b25586f544629a90fa943c1b0f51b"
-              projectID: 8f27e7b2f6d548ca94c95c1c98b76e8b
+              projectID: "8f27e7b2f6d548ca94c95c1c98b76e8b"
               # projectName is the name of the cloud project
               # Required;
               # Example: 
               # projectName: "Nova"
-              projectName: network-demos
+              projectName: "network-demos"
               # regionName is the region of the cloud service
               # Required;
               # Example: 
               # regionName: "RegionOne"
-              regionName: RegionOne
+              regionName: "RegionOne"
+              # networks is a list of network configurations
+              # - name: The name of the network (Required)
+              #   networkid: The unique ID of the network (Required)
+              #   subnetid: The unique ID of the subnet (Required)
+              #   type: Specifies the vNIC type, either "pv" (normal) or "vf" (direct) (Required)
+              #   cidr: The CIDR block for the network (Required)
+              #   secgroup: (Optional) A list of security group IDs associated with the network.
+              #             If not provided, the security group(s) specified in the CNSBC Application custom resource will be used.
+              #             If both are omitted, the default security group will be used.
+              #   vips: (Optional) A list of VIP ranges for reservation. If not provided, the operator will not reserve any VIPs.
+              #   - start: The start IP of the VIP range
+              #     end: The end IP of the VIP range
+              # 
+              # The operator performs VIP reservation for the ranges specified in the 'networks[*].vips'
+              # To disable VIP reservation for a specific network/subnet, omit the 'networks[*].vips' field
+              # When VIP reservation is disabled here, you can reserve VIP ranges using the allocation pools of a network/subnet 
+              # on the cloud provider, which is the preferred method to avoid redundant configurations.
+              # 
+              # The example below illustrates a configuration with VIP reservation disabled:
+              # networks:
+              # - name: "nebula_nw209"
+              #   networkid: "4df6b3b6-cc02-4d3e-b557-8039eeb88da3"
+              #   subnetid: "2724c073-ddb2-4d5b-8bb4-dacad374a5c9"
+              #   type: "vf"
+              #   cidr: "10.1.209.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"]
+              # - name: "nebula_nw210"
+              #   networkid: "57013351-e8b0-49d4-98fd-acf538dda01d"
+              #   subnetid: "a1ef6867-dc03-4633-b8ea-1c0f20f2607c"
+              #   type: "vf"
+              #   cidr: "10.1.210.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"]
+              # 
+              # The following example shows a configuration with VIP reservation enabled.
+              # The 'networks[*].vips' field is included to specify the range of IPs to be reserved.
+              # 
+              # networks:
+              # - name: "nebula_nw209"
+              #   networkid: "4df6b3b6-cc02-4d3e-b557-8039eeb88da3"
+              #   subnetid: "2724c073-ddb2-4d5b-8bb4-dacad374a5c9"
+              #   type: "vf"
+              #   cidr: "10.1.209.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"] 
+              #   vips:
+              #   - start: "10.1.209.200"
+              #     end: "10.1.209.250"
+              # - name: "nebula_nw210"
+              #   networkid: "57013351-e8b0-49d4-98fd-acf538dda01d"
+              #   subnetid: "a1ef6867-dc03-4633-b8ea-1c0f20f2607c"
+              #   type: "vf"
+              #   cidr: "10.1.210.0/24"
+              #   secgroup: ["aa691dbf-9bd5-4fb5-b8ac-0f7b385cebbd"] 
+              #   vips:
+              #   - start: "10.1.210.200"
+              #     end: "10.1.210.250"
               networks:
-                - name: cnsbc_net
-                  networkid: e671bbc1-fdaf-4c96-b54a-5cd7e3096112
-                  subnetid: 44b4edee-3a11-45c2-bc11-5571421b1942
-                  type: pv
-                  cidr: 11.0.2.0/24
+                - name: "cnsbc_net"
+                  networkid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
+                  subnetid: "44b4edee-3a11-45c2-bc11-5571421b1942"
+                  type: "pv"
+                  cidr: "11.0.2.0/24"
+                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+                  vips:
+                    - start: "11.0.2.5"
+                      end: "11.0.2.50"
           repositoryPrefix: cnsbc
           watchNamespaces: ocadm-cnsbc
           imageRegistry: image-registry.openshift-image-registry.svc:5000
