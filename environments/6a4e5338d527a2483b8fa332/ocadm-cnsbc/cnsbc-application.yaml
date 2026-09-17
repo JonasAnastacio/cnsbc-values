@@ -498,6 +498,12 @@ spec:
               limits:
                 memory: "4Gi"
                 hugepages-2Mi: "2Gi"
+            vnics:
+              openstack:
+                - name: "net0"
+                  network-name: "cnsbc_net"
+                  vips: ["11.0.2.10"]
+                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-signaling component.
             # Optional; Default: [];
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
@@ -511,12 +517,6 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
-            vnics:
-              openstack:
-                - name: net0
-                  network-name: cnsbc_net
-                  vips:
-                    - 11.0.2.10
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management policy:
           # - The total core count assigned to the container must be a multiple of the SMT threads per physical core.
           #   For example, with 2 threads per core, the total CPU count must be a multiple of 2.
@@ -800,6 +800,12 @@ spec:
               limits:
                 memory: "4Gi"
                 hugepages-2Mi: "2Gi"
+            vnics:
+              openstack:
+                - name: "net0"
+                  network-name: "cnsbc_net"
+                  vips: ["11.0.2.11"]
+                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-media component.
             # Optional; Default: [];
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
@@ -813,12 +819,6 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
-            vnics:
-              openstack:
-                - name: net0
-                  network-name: cnsbc_net
-                  vips:
-                    - 11.0.2.11
           # On SMT-enabled systems with 'full-pcpu-only' set in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, valid total core counts are multiples of 2.
