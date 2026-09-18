@@ -1708,7 +1708,7 @@ spec:
             # tag is the version number of the image in the registry
             # Required;
             # Immutable: No
-            tag: ""
+            tag: "26.0.3"
             # pullPolicy specifies the imagePullPolicy
             # Optional; Allowed-values: Always, IfNotPresent, Never; Default: "IfNotPresent"
             # Immutable: No
