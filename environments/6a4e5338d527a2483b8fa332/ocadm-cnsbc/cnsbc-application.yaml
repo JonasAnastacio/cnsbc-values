@@ -1700,7 +1700,7 @@ spec:
             # repository is the path/folder structure where the log-janitor image is available within the registry
             # Required;
             # Immutable: No
-            repository: ""
+            repository: "cnsbc"
             # name is the name of the image in registry
             # Optional; Default: "log-janitor"
             # Immutable: No
