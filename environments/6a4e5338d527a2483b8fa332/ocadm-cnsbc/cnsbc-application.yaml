@@ -46,7 +46,8 @@ spec:
           # imageRegistry from where the image should be pulled
           # Required;
           # Immutable: No
-          imageRegistry: &imgRegRef "image-registry.openshift-image-registry.svc:5000"
+          imageRegistry: &imgRegRef ""
+
           # imagePullSecrets provides support pulling images from private registries
           # Optional;
           # Impact: Not providing secrets may cause image pull failures while deploying pods
@@ -58,11 +59,13 @@ spec:
           # - name: secretname2
           # Immutable: No
           imagePullSecrets: []
+
           # namePrefix is used to form resource name as: namePrefix/Release-name + chart-name + custom-resource-name
           # Optional;
           # If it is empty then Helm release-name will be taken as a prefix
           # Immutable: No
           namePrefix: ""
+
           trace:
             # serviceName name of the service that can be configured to reach tracing service
             # Optional; Allowed-values: FQDN, FQDN:Port, IP, IP:Port
@@ -73,6 +76,7 @@ spec:
             # Optional; Allowed-values: http/protobuf", "http/json"; Default: http/protobuf
             # Immutable: No
             clientType: "http/protobuf"
+
           # securityContext defines access control settings for all the pods
           # deployed as part of this Helm chart
           # Mandatory
@@ -81,10 +85,12 @@ spec:
             # Optional; Default: 10000
             # Immutable: Yes
             runAsUser: 10000
+
             # runAsGroup for the pod
             # Optional; Default: 20000
             # Immutable: Yes
             runAsGroup: 20000
+
             # fsGroup for the pod
             # Mandatory;
             # Immutable: Yes
@@ -106,11 +112,13 @@ spec:
             #                  | Not Set |     setup      |
             #---------------------------------------------#
             #
-            fsGroup: 1000760000
+            fsGroup:
+
             # fsGroupChangePolicy defines behavior for changing ownership and permissions of the
             # volume before being exposed inside a Pod
             # Immutable: Yes
             fsGroupChangePolicy: "OnRootMismatch"
+
             # supplementalGroups control which supplemental group ID can be assigned to processes in a pod.
             # Optional;
             # A list of groups specified here will be applied to the first process run in each container,
@@ -119,27 +127,32 @@ spec:
             # from the value as specified under "groupId" field
             # Immutable: Yes
             supplementalGroups: []
+
           # enableTranscoding setting this flag to true will enable transcoding resource deployment
           # Optional; Allowed-values: true, false; Default: false
           # Impact: setting to false will not deploy transcoding resources. So transcoding functionality will not work
           # Immutable: No
           enableTranscoding: false
+
           # enableRemoteSync setting this flag to true will enable the microservice to access configuration data from
           # & write troubleshooting data to local ephemeral storage which will be synced to the remote storage using rsync
           # Optional; Allowed-values: true, false; Default: false
           # NOTE: This feature needs to be enabled when NFS storageClass PVCs are used
           # for storing persistent data like configuration & troubleshooting data.
           enableRemoteSync: false
+
           # enableBackup setting this flag to true will enable backup CR deployment
           # Valid values needs to be configured in backup field if its true
           # If flag is false, backup CR will not be deployed
           # Optional; Allowed-values: true, false; Default: false
           enableBackup: false
+
           # enableRestore setting this flag to true will enable restore CR deployment
           # Valid values needs to be configured in restore field if its true
           # If flag is false, restore CR will not be deployed
           # Optional; Allowed-values: true, false; Default: false
           enableRestore: false
+
           # persistentVolumeClaim persistent storage management for cnsbc application
           persistentVolumeClaim:
             # configuration will store data for RBT, LRT, CA certificates, and licenses
@@ -148,7 +161,7 @@ spec:
               # storageClassName is the name of the StorageClass provisioned in the cluster that supports ReadWriteMany access mode
               # Required;
               # Immutable: Yes
-              storageClassName: "rook-cephfs"
+              storageClassName: ""
               resources:
                 requests:
                   # storage is the size of the PersistentVolumeClaim required for storing RBT, LRT, CA certificates, and licenses data
@@ -161,7 +174,7 @@ spec:
               # storageClassName is the name of the StorageClass provisioned in the cluster that supports ReadWriteMany access mode
               # Required;
               # Immutable: Yes
-              storageClassName: "rook-cephfs"
+              storageClassName: ""
               resources:
                 requests:
                   # storage is the size of the PersistentVolumeClaim required for storing troubleshooting data
@@ -182,9 +195,11 @@ spec:
                   # NOTE: This value should be sum(configFiles.resources.storage + configManager.persistentVolumeClaim.resources.storage)
                   # Immutable: Yes
                   storage: "6Gi"
-                  # ephemeralVolumes temporary storage management for cnsbc application
+
+
+         # ephemeralVolumes temporary storage management for cnsbc application
           ephemeralVolumes:
-            # emptyDirs is a type of ephemeral storage that provides an empty directory within a pod for temporary data storage
+          # emptyDirs is a type of ephemeral storage that provides an empty directory within a pod for temporary data storage
             emptyDirs:
               # localStorage will store the local copy of configuration data RBT, LRT, CA certificates, and licenses) & troubleshooting data (packet and protocol traces, and crash logs)
               # cnsbc-media, cnsbc-signaling, cnsbc-transcode subcharts will use this volume
@@ -198,6 +213,7 @@ spec:
                 # sizeLimit is the total amount of storage required for storing local copy of configuration backup
                 # Optional; Default: "1Gi";
                 sizeLimit: "1Gi"
+
           # Start of global level bootstrap subsection - Applicable to signaling and media
           bootstrap:
             # desiredActiveMediaEngines defines number of active media engines in a cluster
@@ -228,6 +244,7 @@ spec:
           # impact: When this flag is set to false, cardinality of metrics that are being exported to Prometheus by SE/ME/TE will increase based on configuration
           # Immutable: No
           enableMetricsAllowList: true
+
           # Start of global level tls parameters subsection
           tls:
             # certificates contains the list of TLS certificates signed by certificate authority
@@ -305,6 +322,7 @@ spec:
             #       size: 2048
           # End of global level tls parameters subsection
 
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
@@ -312,11 +330,13 @@ spec:
           #   kubernetes.io/hostname: node1
           # Immutable: No
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           # Immutable: No
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           #   Useful if you want to dedicate nodes to just run the cnsbc-signaling
@@ -330,18 +350,21 @@ spec:
           #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           # Immutable: No
           tolerations: []
+
           # labels add labels to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           # NOTE: if you modify labels, it would recreate application pods and may cause service disruption
           # Immutable: No
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           # NOTE: if you modify annotations, it would recreate application pods and may cause service disruption
           # Immutable: No
           annotations: {}
+
           # Start of global level initContainer image section
           initContainer:
             # Information about the initContainer image
@@ -349,12 +372,12 @@ spec:
               # registry initContainer image registry
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository initContainer image path
               # Required;
               # user needs to provide the value of repository , example : reference
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name initContainer image name
               # Optional; Default: cnsbc-utility
               # Immutable: No
@@ -362,7 +385,7 @@ spec:
               # tag initContainer image tag
               # Required;
               # Immutable: No
-              tag: "26.0.3"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
@@ -376,11 +399,11 @@ spec:
               # registry is the name of the container registry where the coherence image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the coherence image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: coherence_cpu
               # Immutable: No
@@ -388,15 +411,17 @@ spec:
               # tag is the version number of the image in the registry
               # Required;
               # Immutable: No
-              tag: "14.1.2.0.4"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
               pullPolicy: "Always"
+
             # securityContext defines access control settings for pods deployed as part of subchart
             # Optional; Default: {}
             securityContext:
               runAsNonRoot: true
+
           # fluentBit container image details
           fluentBit:
             # image Information about the fluentBit image
@@ -404,11 +429,11 @@ spec:
               # registry is the name of the container registry where the fluentBit image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the fluentBit image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: fluent-bit
               # Immutable: No
@@ -416,52 +441,52 @@ spec:
               # tag is the version number of the image in the registry
               # Required;
               # Immutable: No
-              tag: "26.0.3"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
               pullPolicy: "Always"
+
           # rsync container image details
           rsync:
             # image Information about the rsync image
             image:
               # registry is the name of the container registry where the rsync image is available
               # Required;
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the rsync image is available within the registry
               # Required;
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: rsync
               name: "rsync"
               # tag is the version number of the image in the registry
               # Required;
-              tag: "26.0.3"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               pullPolicy: "Always"
-          serviceNetworks:
-            - name: cnsbc_net
-              cidr: 11.0.2.0/24
-              gatewayip: 11.0.2.1
-              mtu: 1500
+
         ##################################################################################
         #
         # End of Global Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of cnsbc-signaling Parameters
         #
         ##################################################################################
+
         cnsbc-signaling:
           # replicas  Number of signaling engines that will be deployed.
           # Optional; Allowed-values: 1 or 2; Default: 2
           # 1 - One Active signaling engine 2 - One Active & one Standby signaling engine
           # Immutable: Yes
           replicas: 2
+
           # signaling Information about the signaling engine image
           signaling:
             # image Information about the signaling engine image
@@ -469,11 +494,11 @@ spec:
               # registry is the name of the container registry where the signaling image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the cnsbc-signaling image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: cnsbc-signaling
               # Immutable: No
@@ -481,11 +506,12 @@ spec:
               # tag is the version number of the image in the registry
               # Optional;
               # Immutable: No
-              tag: "26.0.3"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               # Immutable: No
               pullPolicy: "Always"
+
             # resources is the maximum resources we can allocate to the cnsbc-signaling container
             # Optional;
             # cpu limit will be derived from cores configured (signaling + forwarding + 1(dos))
@@ -498,17 +524,20 @@ spec:
               limits:
                 memory: "4Gi"
                 hugepages-2Mi: "2Gi"
+                
             vnics:
               openstack:
-                - name: "net0"
-                  network-name: "cnsbc_net"
-                  vips: ["11.0.2.10"]
-                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+              - name: "net0"
+                network-name: "cnsbc_net"
+                vips: ["11.0.2.10"]
+                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-signaling component.
             # Optional; Default: [];
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
             # Do not change this field here. To add additional metrics, specify them in metrics-allowlist.yaml only.
             metricsAllowList: []
+
             # log defines the log level for processes/tasks in signaling engine
             log:
               # level allows to configure task/process wide logging information
@@ -517,6 +546,7 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management policy:
           # - The total core count assigned to the container must be a multiple of the SMT threads per physical core.
           #   For example, with 2 threads per core, the total CPU count must be a multiple of 2.
@@ -542,6 +572,7 @@ spec:
             # Optional; Default: 3
             # Immutable: No
             replicas: 3
+
             # resources for signaling database pods
             # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management,
             # the total CPU resource limit assigned to a container must be a multiple of SMT threads per physical core.
@@ -574,6 +605,7 @@ spec:
             # Optional; Allowed Values: true, false; Default: false;
             # Immutable: Yes
             enabled: false
+
           # cdrManager is deployed as a sidecar container along with signaling container
           # dependencies: cdrManager will be deployed only if accounting is enabled
           cdrManager:
@@ -582,11 +614,11 @@ spec:
               # registry is the name of the container registry where the xfer-service image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the xfer-service image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: xfer-service
               # Immutable: No
@@ -594,11 +626,12 @@ spec:
               # tag is the version number of the image in the registry
               # Required when accounting is enabled
               # Immutable: No
-              tag: "26.0.3"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
             # resources for cdr-manager container
             # Optional;
             # resources:
@@ -610,18 +643,20 @@ spec:
               limits:
                 memory: "256Mi"
                 cpu: "500m"
+
             # persistentVolumeClaim will store the data for CDR
             persistentVolumeClaim:
               # storageClassName is the name of the StorageClass provisioned in the cluster that supports ReadWriteOnce access mode. It must be based on block storage.
               # Required;
               # Immutable: Yes
-              storageClassName: "rook-cephfs"
+              storageClassName: ""
               resources:
                 requests:
                   # storage is the size of the PersistentVolumeClaim required for storing CDR data
                   # Optional; Default: "1Gi";
                   # Immutable: Yes
                   storage: "1Gi"
+
             # start of file transfer service parameters for cdr-manager container
             sftp:
               server:
@@ -652,6 +687,7 @@ spec:
                 # Optional; Default: "cnsbc_sftp/cdr"
                 # Immutable: No
                 remotePath: "cnsbc_sftp/cdr"
+
                 # knownhosts is the knownhosts information of the SFTP server, which will be used to validate that
                 # file is getting transferred to trusted server.
                 # To get knownhosts data use command: ssh-keyscan example-sftp-server.com  or ssh-keyscan 10.1.1.15
@@ -665,6 +701,7 @@ spec:
                 # Required, if accounting is enabled
                 # Immutable: No
                 knownhosts: ""
+
               client:
                 # destinationFilePrefix is a prefix appended to the file name that gets transmitted
                 # Optional; Default: ""
@@ -683,7 +720,9 @@ spec:
                 # Optional; Default: 1000000
                 # Immutable: No
                 totalDiskSpaceInKBs: 1000000
-                # End of file transfer service parameters for cdr-manager container
+            # End of file transfer service parameters for cdr-manager container
+
+
           # serviceAccount is the service account to create and assign RBAC roles to
           serviceAccount:
             # create specifies whether a service account should be created
@@ -705,6 +744,7 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # Optional; Default: {}
           # runAsUser and runAsGroup is not configurable for the main pod; instead, provided fields will
@@ -712,6 +752,7 @@ spec:
           # fsGroup configured here will not be prioritized for this pod; instead, global.securityContext.fsGroup
           # will be prioritized
           securityContext: {}
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # if set, only following nodeSelector is applied and global nodeSelector ignored
@@ -720,6 +761,7 @@ spec:
           #   kubernetes.io/hostname: node1
           # Immutable: No
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # if set, only following affinity is applied and global affinity ignored
@@ -729,13 +771,14 @@ spec:
             nodeAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
                 nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node-role.kubernetes.io/worker
-                        operator: Exists
-                      - key: node-role.kubernetes.io/master
-                        operator: DoesNotExist
-                      - key: node-role.kubernetes.io/control-plane
-                        operator: DoesNotExist
+                - matchExpressions:
+                  - key: node-role.kubernetes.io/worker
+                    operator: Exists
+                  - key: node-role.kubernetes.io/master
+                    operator: DoesNotExist
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
@@ -750,29 +793,35 @@ spec:
           #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           # Immutable: No
           tolerations: []
+
           # labels add labels to all the resources
           # Optional;
           # if set, both following labels and global labels applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           # Immutable: No
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # if set, both following annotations and global labels applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           # Immutable: No
           annotations: {}
+
+
         ##################################################################################
         #
         # End of cnsbc-signaling Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of cnsbc-media Parameters
         #
         ##################################################################################
+
         cnsbc-media:
           # media Information about the media engine
           media:
@@ -781,11 +830,11 @@ spec:
               # registry is the name of the container registry where the media image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the cnsbc-media image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: cnsbc-media
               # Immutable: No
@@ -798,6 +847,7 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
             # resources is the maximum resources we can allocate to the cnsbc-media container
             # Optional;
             # cpu limit will be derived from cores configured (signaling + forwarding)
@@ -810,17 +860,20 @@ spec:
               limits:
                 memory: "4Gi"
                 hugepages-2Mi: "2Gi"
+                
             vnics:
               openstack:
-                - name: "net0"
-                  network-name: "cnsbc_net"
-                  vips: ["11.0.2.11"]
-                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+              - name: "net0"
+                network-name: "cnsbc_net"
+                vips: ["11.0.2.11"]
+                secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-media component.
             # Optional; Default: [];
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
             # Do not change this field here. To add additional metrics, specify them in metrics-allowlist.yaml only.
             metricsAllowList: []
+
             # log defines the log level for processes/tasks in media engine
             log:
               # level allows to configure task/process wide logging information
@@ -829,6 +882,7 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+
           # On SMT-enabled systems with 'full-pcpu-only' set in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, valid total core counts are multiples of 2.
@@ -854,6 +908,7 @@ spec:
             # Optional; Default: 3
             # Immutable: No
             replicas: 3
+
             # resources for media database pods
             # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management,
             # the total CPU resource limit assigned to a container must be a multiple of SMT threads per physical core.
@@ -868,6 +923,7 @@ spec:
               limits:
                 memory: "1Gi"
                 cpu: 1
+
             # jvm heap memory for media database pods
             # when Heap memory of the mediaDatabase cluster need to be allocated
             # manually with a certain value, else Operator will
@@ -878,7 +934,7 @@ spec:
             jvm:
               memory:
                 heapSize: ""
-          # End of media database section
+         # End of media database section
 
           # serviceAccount is the service account to create and assign RBAC roles to
           serviceAccount:
@@ -901,6 +957,7 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
           # securityContext defines access control settings for pods deployed as part of subchart
           # Optional; Default: {}
           # runAsUser and runAsGroup are not configurable for the main pod; instead, provided fields will
@@ -908,6 +965,7 @@ spec:
           # fsGroup configured here will not be prioritized for this pod; instead, global.securityContext.fsGroup
           # will be prioritized.
           securityContext: {}
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # if set, only following nodeSelector is applied and global nodeSelector ignored
@@ -917,6 +975,7 @@ spec:
           #   kubernetes.io/hostname: node1
           # Immutable: No
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # if set, only following affinity is applied and global affinity ignored
@@ -927,13 +986,14 @@ spec:
             nodeAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
                 nodeSelectorTerms:
-                  - matchExpressions:
-                      - key: node-role.kubernetes.io/worker
-                        operator: Exists
-                      - key: node-role.kubernetes.io/master
-                        operator: DoesNotExist
-                      - key: node-role.kubernetes.io/control-plane
-                        operator: DoesNotExist
+                - matchExpressions:
+                  - key: node-role.kubernetes.io/worker
+                    operator: Exists
+                  - key: node-role.kubernetes.io/master
+                    operator: DoesNotExist
+                  - key: node-role.kubernetes.io/control-plane
+                    operator: DoesNotExist
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
@@ -949,29 +1009,35 @@ spec:
           # This value affects both mediaDatabase and media pods
           # Immutable: No
           tolerations: []
+
           # labels add extra labels to all the resources
           # Optional;
           # if set, both following labels and global labels applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           # Immutable: No
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # if set, both following annotations and global annotations applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           # Immutable: No
           annotations: {}
+
+
         ##################################################################################
         #
         # End of cnsbc-media Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of cnsbc transcode controller Parameters
         #
         ##################################################################################
+
         cnsbc-transcode-controller:
           # transcodeController Information
           transcodeController:
@@ -980,11 +1046,11 @@ spec:
               # registry is the name of the container registry where the transcode controller is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the transcode-controller image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: transcode-controller
               # Immutable: No
@@ -997,11 +1063,13 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
             # replicas number of transcode-controller replicas to be deployed
             # Optional; Allowed-Values: Any odd number; Default: 3.
             # The replica count should be in odd numbers
             # Immutable: No
             replicas: 3
+
             # resources is the maximum resources we can allocate to the transcode-controller container
             # Optional;
             # resources:
@@ -1013,6 +1081,7 @@ spec:
               limits:
                 memory: "2Gi"
                 cpu: 2
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # if set, only following nodeSelector is applied and global nodeSelector ignored
@@ -1020,11 +1089,13 @@ spec:
           # nodeSelector:
           #   kubernetes.io/hostname: node1
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # if set, only following affinity is applied and global affinity ignored
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
@@ -1038,31 +1109,37 @@ spec:
           #
           # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           tolerations: []
+
           # labels add extra labels to all the resources
           # Optional;
           # if set, both following labels and global labels applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # if set, both following annotations and global annotations applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+
           # securityContext defines access control settings for pods deployed as part of subchart
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+
         ##################################################################################
         #
         # End of cnsbc transcode controller Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of cnsbc-transcode Parameters
         #
         ##################################################################################
+
         cnsbc-transcode:
           # transcode Information about the transcode engine
           transcode:
@@ -1071,11 +1148,11 @@ spec:
               # registry is the name of the container registry where the transcode image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the cnsbc-transcode image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: cnsbc-media
               # Immutable: No
@@ -1088,6 +1165,7 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
             # resources is the maximum resources we can allocate to the cnsbc-transcode container
             # Optional;
             # cpu limit will be derived from cores configured (signaling + forwarding + xcore)
@@ -1100,11 +1178,13 @@ spec:
               limits:
                 memory: "4Gi"
                 hugepages-2Mi: "2Gi"
+
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-transcode component.
             # Optional; Default: [];
             # These metrics will be added to the default set and included in the ConfigMap used by the application.
             # Do not change this field here. To add additional metrics, specify them in metrics-allowlist.yaml only.
             metricsAllowList: []
+
             # log defines the log level for processes/tasks in transcode engine
             log:
               # level allows to configure task/process wide logging information
@@ -1113,12 +1193,7 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
-            vnics:
-              openstack:
-                - name: net0
-                  network-name: cnsbc_net
-                  vips:
-                    - 11.0.2.12
+
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, total CPUs must be a multiple of 2.
@@ -1148,6 +1223,7 @@ spec:
             # Optional; Default: 3
             # Immutable: No
             replicas: 3
+
             # resources for transcode database pods
             # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management,
             # the total CPU resource limit assigned to a container must be a multiple of SMT threads per physical core.
@@ -1162,6 +1238,7 @@ spec:
               limits:
                 memory: "1Gi"
                 cpu: 1
+
             # jvm heap memory for transcode database pods
             # when Heap memory of the transcodingDatabase cluster need to be allocated
             # manually with a certain value, else Operator will
@@ -1194,6 +1271,7 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # Optional; Default: {}
           # runAsUser and runAsGroup is not configurable for the main pod; instead, provided fields will
@@ -1201,6 +1279,7 @@ spec:
           # fsGroup configured here will not be prioritized for this pod; instead, global.securityContext.fsGroup
           # will be prioritized.
           securityContext: {}
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # if set, only following nodeSelector is applied and global nodeSelector ignored
@@ -1210,6 +1289,7 @@ spec:
           #   kubernetes.io/hostname: node1
           # Immutable: No
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # if set, only following affinity is applied and global affinity ignored
@@ -1217,6 +1297,7 @@ spec:
           # This value affects both transcodingDatabase and transcode pods
           # Immutable: No
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
@@ -1232,29 +1313,34 @@ spec:
           # This value affects both transcodingDatabase and transcode pods
           # Immutable: No
           tolerations: []
+
           # labels add extra labels to all the resources
           # Optional;
           # if set, both following labels and global labels applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           # Immutable: No
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # if set, both following annotations and global annotations applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           # Immutable: No
           annotations: {}
+
         ##################################################################################
         #
         # End of cnsbc-transcode Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of HA service manager Parameters
         #
         ##################################################################################
+
         cnsbc-ha-service-manager:
           # haServiceManager Information about the HA service manager
           haServiceManager:
@@ -1263,11 +1349,11 @@ spec:
               # registry is the name of the container registry where the HA service manager image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the HA service manager image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: ha-service-manager
               # Immutable: No
@@ -1280,10 +1366,12 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
             # replicas indicate number of ha-service-manager pods to be deployed
             # Optional; Default: 2
             # Immutable: No
             replicas: 2
+
           # serviceAccount is the service account to create and assign RBAC roles to
           serviceAccount:
             # create specifies whether a service account should be created
@@ -1304,10 +1392,12 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # if set, only following nodeSelector is applied and global nodeSelector ignored
@@ -1315,11 +1405,13 @@ spec:
           # nodeSelector:
           #   kubernetes.io/hostname: node1
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # if set, only following affinity is applied and global affinity ignored
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           # if set, both following tolerations and global tolerations applied
@@ -1333,27 +1425,32 @@ spec:
           #
           # ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           tolerations: []
+
           # labels add extra labels to all the resources
           # Optional;
           # if set, both following labels and global labels applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # if set, both following annotations and global annotations applied
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+
         ##################################################################################
         #
         # End of HA service manager Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of cnsbc configuration manager Parameters
         #
         ##################################################################################
+
         cnsbc-configuration-manager:
           # configManager Information about the configuration manager
           configManager:
@@ -1362,11 +1459,11 @@ spec:
               # registry is the name of the container registry where the configuration manager image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the configuration manager image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: configuration-manager
               # Immutable: No
@@ -1374,24 +1471,26 @@ spec:
               # tag is the version number of the image in the registry
               # Optional;
               # Immutable: No
-              tag: "26.0.3"
+              tag: ""
               # pullPolicy specify a imagePullPolicy
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
             backupRestoreAgent:
               # image cnsbc-config image
               image:
                 # cnsbc-config image registry
-                registry: image-registry.openshift-image-registry.svc:5000
+                registry: *imgRegRef
                 # cnsbc-config image path
-                repository: "cnsbc"
+                repository: ""
                 # name of the image
                 name: "backup-restore-agent"
                 # Provide a value if you need to override the image tag, which otherwise defaults to the chart appVersion.
-                tag: "26.0.3"
+                tag: ""
                 # pullPolicy specify a imagePullPolicy - Possible Values are:- Always, IfNotPresent, Never
                 pullPolicy: "Always"
+
             # resources for cnsbc-configuration-manager container
             # Optional; Default: Small Configuration values
             # CPU and memory configuration recommendation details.
@@ -1407,21 +1506,24 @@ spec:
               requests:
                 memory: "512Mi"
                 cpu: "500m"
+
             persistentVolumeClaim:
               # storageClassName is the name of the StorageClass provisioned in the cluster that supports ReadWriteOnce access mode
               # Required;
               # Immutable: Yes
-              storageClassName: "rook-cephfs"
+              storageClassName: ""
               resources:
                 requests:
                   # storage is the size of the PersistentVolumeClaim required for storing configuration data
                   # Optional; Default: "5Gi";
                   # Immutable: Yes
                   storage: "5Gi"
+
             # replicas Number of cnsbc-configuration-manager replicas to be deployed
             # Optional; Default: 3
             # Immutable: No
             replicas: 3
+
             # settings to adjust the liveness probe timings for configuration-manager
             livenessProbe:
               # failureThreshold when a probe fails, kubernetes will try failureThreshold times before giving up.
@@ -1429,6 +1531,7 @@ spec:
               failureThreshold: 5
               # periodSeconds is how often (in seconds) to perform the probe.
               periodSeconds: 80
+
             # settings to adjust the readiness probe timings for configuration-manager
             readinessProbe:
               # failureThreshold when a probe fails, kubernetes will try failureThreshold times before giving up.
@@ -1436,17 +1539,20 @@ spec:
               failureThreshold: 5
               # periodSeconds is how often (in seconds) to perform the probe.
               periodSeconds: 80
+
             # env environment variables
             # Optional;
             # ref: https://kubernetes.io/docs/tasks/inject-data-application/define-environment-variable-container/
-            env: []
+            env : []
+
             # primaryPasswordSecretName User needs to ensure a secret is created before deploying cnsbc application.
             # Required;
             # impact: If Secret is not configured deployment will fail to deploy.
             # Provide the name of the Secret. It will be used to get the primary password.
             # The password provided in this Secret will be used to encrypt the password type attributes of config element
             # Immutable: No
-            primaryPasswordSecretName: "primary-password"
+            primaryPasswordSecretName: ""
+
           # serviceAccount is the service account to create and assign RBAC roles to
           serviceAccount:
             # create specifies whether a service account should be created
@@ -1467,22 +1573,26 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # fsGroup configured here will not be prioritized for this pod; instead, global.securityContext.fsGroup
           # will be prioritized
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
           # nodeSelector:
           #   kubernetes.io/hostname: node1
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           #   Useful if you want to dedicate nodes to just run the cnsbc-signaling
@@ -1495,44 +1605,51 @@ spec:
           #
           #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           tolerations: []
+
           # labels add labels to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+
           # Backup CR specific parameters
           backup:
-            periodic: # Whether its periodic backup. Default: true
-            frequency: "" # Frequency of backup Default: "1h". Ex: "2h" for every 2 hours, "3m" for every 3 months, "0.5y" for every 6 months.
-            timeofday: "" # Required if frequency >= '1d'
-            fileName: "" # Backup file name
-            backupLoc: "" # Remote backup location specification. Default: s3
-            statusReqTimeout: # Timeout for backup operation. Default: 20 (in minutes)
+            periodic:      # Whether its periodic backup. Default: true
+            frequency: ""  # Frequency of backup Default: "1h". Ex: "2h" for every 2 hours, "3m" for every 3 months, "0.5y" for every 6 months.
+            timeofday: ""  # Required if frequency >= '1d'
+            fileName: ""   # Backup file name
+            backupLoc: ""  # Remote backup location specification. Default: s3
+            statusReqTimeout:   # Timeout for backup operation. Default: 20 (in minutes)
             s3:
               secretAccessKeySecretRef: ""
               path: ""
+
           # Restore CR specific parameters
           restore:
-            fileName: "" # Backup file name
-            source: "" # Remote backup location specification. Default: s3
-            statusReqTimeout: # Timeout for restore operation. Default: 20 (in minutes)
+            fileName: ""  # Backup file name
+            source: ""    # Remote backup location specification. Default: s3
+            statusReqTimeout:   # Timeout for restore operation. Default: 20 (in minutes)
             s3:
               secretAccessKeySecretRef: ""
               path: ""
+
         ##################################################################################
         #
         # End of cnsbc configuration manager Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of file service manager Parameters
         #
         ##################################################################################
+
         cnsbc-file-manager:
           # fileManager Information about the file service manager
           fileManager:
@@ -1541,11 +1658,11 @@ spec:
               # registry is the name of the container registry where the file service manager image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the file service manager image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: file-service
               # Immutable: No
@@ -1558,16 +1675,19 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
           # nodeSelector:
           #   kubernetes.io/hostname: node1
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           #   Useful if you want to dedicate nodes to just run the cnsbc-file-manager
@@ -1580,31 +1700,37 @@ spec:
           #
           #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           tolerations: []
+
           # labels add labels to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # fsGroup configured here will not be prioritized for this pod; instead, global.securityContext.fsGroup
           # will be prioritized
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+
         ##################################################################################
         #
         # End of file service manager Parameters
         #
         ##################################################################################
 
+
         ##################################################################################
         #
         # Start of cnsbc cli proxy Parameters
         #
         ##################################################################################
+
         cnsbc-cli-proxy:
           # cliProxy Information about the cnsbc cli proxy
           cliProxy:
@@ -1613,11 +1739,11 @@ spec:
               # registry is the name of the container registry where the cli proxy image is available
               # Required;
               # Immutable: No
-              registry: image-registry.openshift-image-registry.svc:5000
+              registry: *imgRegRef
               # repository is the path/folder structure where the cli proxy image is available within the registry
               # Required;
               # Immutable: No
-              repository: "cnsbc"
+              repository: ""
               # name is the name of the image in registry
               # Optional; Default: cli-proxy
               # Immutable: No
@@ -1630,16 +1756,19 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: Always
               # Immutable: No
               pullPolicy: "Always"
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
           # nodeSelector:
           #   kubernetes.io/hostname: node1
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           #   Useful if you want to dedicate nodes to just run the cnsbc-cli-proxy
@@ -1652,18 +1781,22 @@ spec:
           #
           #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           tolerations: []
+
           # labels add labels to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
+
           # annotations add annotations to all the resources
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+
         ##################################################################################
         #
         # End of cnsbc cli proxy Parameters
@@ -1675,12 +1808,14 @@ spec:
         # Start of cnsbc-log-janitor Parameters
         #
         ##################################################################################
+
         cnsbc-log-janitor:
           # enabled controls whether the log-janitor CronJob is deployed
           # Optional; Allowed-values: true, false; Default: true
           # Impact: If false, the log-janitor functionality is disabled
           # Immutable: No
           enabled: true
+
           # schedule defines the cron schedule for running the cnsbc-log-janitor job
           # Format: minute hour day-of-month month day-of-week
           # - minute: 0-59 or */interval (e.g., */5 for every 5 minutes)
@@ -1691,6 +1826,7 @@ spec:
           # Optional; Default: "*/5 * * * *" (runs every 5 minutes)
           # Immutable: No
           schedule: "*/5 * * * *"
+
           # image Information about the log-janitor image
           image:
             # registry is the name of the container registry where the log-janitor image is available
@@ -1713,6 +1849,7 @@ spec:
             # Optional; Allowed-values: Always, IfNotPresent, Never; Default: "IfNotPresent"
             # Immutable: No
             pullPolicy: "Always"
+
           # highWatermarkPct is the high watermark percentage for triggering cleanup
           # Optional; Default: 80
           # Immutable: No
@@ -1721,6 +1858,7 @@ spec:
           # Optional; Default: 70
           # Immutable: No
           lowWatermarkPct: 70
+
           # nodeSelector is the node labels for pod assignment
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#nodeselector
@@ -1728,11 +1866,13 @@ spec:
           #   kubernetes.io/hostname: node1
           # Immutable: No
           nodeSelector: {}
+
           # affinity controls Pod scheduling preferences.
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
           # Immutable: No
           affinity: {}
+
           # tolerations is for nodes that have taints on them.
           # Optional;
           # Useful if you want to dedicate nodes to just run the log-janitor
@@ -1746,18 +1886,21 @@ spec:
           #   ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
           # Immutable: No
           tolerations: []
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+
           # enableMetrics enables pushing metrics to Pushgateway
           # Optional; Allowed-values: true, false; Default: false
           # Immutable: No
           enableMetrics: false
           # pushgatewayUrl is the URL of the Prometheus Pushgateway
           # Required if enableMetrics is true
-          # Immutable: No
+           # Immutable: No
           pushgatewayUrl: ""
+
           # serviceAccount is the service account to create and assign RBAC roles to
           serviceAccount:
             # create specifies whether a service account should be created
@@ -1777,17 +1920,21 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
         ##################################################################################
         #
         # End of cnsbc-log-janitor Parameters
         #
         ##################################################################################
 
+
+
         ##################################################################################
         #
         # Start of helm test subsection
         #
         ##################################################################################
+
         helmTest:
           # serviceAccountHelmTest is the service account used by Helm to run helm test
           # User can specify an already created SA, by setting create to false
@@ -1812,12 +1959,14 @@ spec:
             #   Ensure the appropriate Kubernetes RBAC resources are configured to grant these permissions.
             # Immutable: No
             name: ""
+
           # securityContext defines access control settings for pods deployed as part of the subchart
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
             runAsGroup: 1000
+
           # Timeout duration of the readiness checks, Value should be defined in seconds
           # Optional; Default: 300
           # Immutable: No
@@ -1839,16 +1988,17 @@ spec:
               # cpu
               # Optional; Default: "500m";
               cpu: "500m"
+
           # Information about the helm test image
           image:
             # registry is the name of the container registry where the helm test image is available
             # Required;
             # Immutable: No
-            registry: image-registry.openshift-image-registry.svc:5000
+            registry: *imgRegRef
             # repository is the path/folder structure where the helm test image is available within the registry
             # Required;
             # Immutable: No
-            repository: "cnsbc"
+            repository: ""
             # name is the name of the image in registry
             # Optional; Default: helm-test
             # Immutable: No
@@ -1856,11 +2006,12 @@ spec:
             # tag is the version number of the image in the registry
             # Required;
             # Immutable: No
-            tag: "26.0.3"
+            tag: ""
             # pullPolicy specify a imagePullPolicy
             # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
             # Immutable: No
             pullPolicy: "Always"
+
         ##################################################################################
         #
         # End of helm test subsection
@@ -1875,24 +2026,31 @@ spec:
 
         # Configurations passed to cnsbc-dashboard subchart
         cnsbc-dashboard-application:
+
           # labels: A map of additional labels to apply to all top-level Kubernetes resources
           # created by this Helm chart (e.g., Deployments, Services, ConfigMaps).
           # Optional; ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
+
           # annotations: A map of additional annotations to apply to all top-level Kubernetes resources
           # created by this Helm chart.
           # Optional; ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
           annotations: {}
+
           dashboard:
+
             # helmDeployment: A boolean flag to control whether dashboards should be deployed
             # as part of the Helm release. If set to 'true', it enables generation of dashboard resources.
             # Optional; Allowed values: true, false; Default: true
             helmDeployment: true
+
             # grafanaDashboard: Configuration specific to GrafanaDashboard Custom Resource-based deployments.
             grafanaDashboard:
+
               # enable: Flag to enable creation of GrafanaDashboard CRs via Grafana Operator.
               # Optional; Allowed values: true, false; Default: true
               enable: false
+
               # instanceSelector: Defines the label selector to map dashboards to a specific Grafana instance.
               # Required when using Grafana CR-based dashboard deployment.
               # Example:
@@ -1901,20 +2059,25 @@ spec:
               #     # This should match the labels configured in the target Grafana instance CR.
               #     dashboard: cnsbc
               instanceSelector: {}
+
               # resyncPeriod: Time interval for the Grafana Operator to resync dashboard state.
               # Optional; Default: 30s; Units: Seconds
               resyncPeriod: 30s
+
             # configMap: Configuration specific to ConfigMap-based dashboard deployments.
             configMap:
+
               # enable: If true, dashboards will be created as ConfigMaps instead of GrafanaDashboard CRs.
               # Optional; Allowed values: true, false; Default: false
               enable: true
+
               # dashboardSelector: Label used by Grafana to detect dashboard ConfigMaps.
               # Optional; Required if enable is true
               # Example:
               # dashboardSelector:
               #   grafana_dashboard: "1"
               dashboardSelector: {}
+
         ##################################################################################
         #
         # End of Application Grafana Dashboard Parameters
@@ -1926,12 +2089,14 @@ spec:
         # Start of cnsbc-application-alerts Parameters
         #
         ##################################################################################
+
         cnsbc-application-alerts:
           # This parameter is to disable all the alerts
           # Optional;
           # If it is set to true all the below alerts would not apply
           # Default value for the parameter is set to false
           disableAllAlerts: false
+
           # Following is the template for the configuration parameters
           # All of the parameters are Optional and filled with default values
           # <Alert-Name>:
@@ -1944,7 +2109,8 @@ spec:
           #     additionalAnnotations: {}                # Additional Annotations can be added using this field, provide annotation in the form of key value pair
           # Edit the below values to modify the default values in alerting rules
           alerts: {}
-          # Alerts values are provided in cnsbc-application-alerts-values.yaml
+            # Alerts values are provided in cnsbc-application-alerts-values.yaml
+
         ##################################################################################
         #
         # End of cnsbc-application-alerts Parameters
