@@ -119,6 +119,8 @@ spec:
             # from the value as specified under "groupId" field
             # Immutable: Yes
             supplementalGroups: []
+            seLinuxOptions:
+              level: s0:c28,c27
           # enableTranscoding setting this flag to true will enable transcoding resource deployment
           # Optional; Allowed-values: true, false; Default: false
           # Impact: setting to false will not deploy transcoding resources. So transcoding functionality will not work
@@ -517,6 +519,8 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+            podAnnotations:
+              openshift.io/required-scc: privileged
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management policy:
           # - The total core count assigned to the container must be a multiple of the SMT threads per physical core.
           #   For example, with 2 threads per core, the total CPU count must be a multiple of 2.
@@ -829,6 +833,8 @@ spec:
               level:
                 usbc-proc: "Info"
                 usdp-proc: "Info"
+            podAnnotations:
+              openshift.io/required-scc: privileged
           # On SMT-enabled systems with 'full-pcpu-only' set in static CPU management:
           # - The total core count assigned to the container must be a multiple of SMT threads per physical core.
           #   For example, with 2 threads per core, valid total core counts are multiples of 2.
@@ -1584,16 +1590,14 @@ spec:
           # Optional;
           # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
           labels: {}
-          # annotations add annotations to all the resources
-          # Optional;
-          # ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
-          annotations: {}
           # securityContext defines access control settings for pods deployed as part of the subchart
           # fsGroup configured here will not be prioritized for this pod; instead, global.securityContext.fsGroup
           # will be prioritized
           # Optional; Default: {}
           securityContext:
             runAsNonRoot: true
+          annotations:
+            openshift.io/required-scc: anyuid
         ##################################################################################
         #
         # End of file service manager Parameters
