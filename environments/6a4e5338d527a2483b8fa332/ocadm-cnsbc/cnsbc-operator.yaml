@@ -114,7 +114,7 @@ spec:
               #   - start: "10.1.210.200"
               #     end: "10.1.210.250"
               networks:
-                - name: "cnsbc_net"
+                - name: "cnsbc_access"
                   networkid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
                   subnetid: "44b4edee-3a11-45c2-bc11-5571421b1942"
                   type: "pv"
@@ -123,6 +123,15 @@ spec:
                   vips:
                     - start: "11.0.2.5"
                       end: "11.0.2.50"
+                - name: "cnsbc_core"
+                  networkid: "e671bbc1-fdaf-4c96-b54a-5cd7e3096112"
+                  subnetid: "0d054865-4687-49b5-b512-0f52d01c0734"
+                  type: "pv"
+                  cidr: "11.0.3.0/24"
+                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+                  vips:
+                    - start: "11.0.3.5"
+                      end: "11.0.3.50"
           repositoryPrefix: cnsbc
           watchNamespaces: ocadm-cnsbc
           imageRegistry: image-registry.openshift-image-registry.svc:5000

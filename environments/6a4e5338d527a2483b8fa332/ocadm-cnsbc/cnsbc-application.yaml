@@ -443,7 +443,7 @@ spec:
               # Optional; Allowed-values: Always, IfNotPresent, Never; Default: IfNotPresent
               pullPolicy: "Always"
           serviceNetworks:
-            - name: cnsbc_net
+            - name: cnsbc_access
               cidr: 11.0.2.0/24
               gatewayip: 11.0.2.1
               mtu: 1500
@@ -503,8 +503,12 @@ spec:
             vnics:
               openstack:
                 - name: "net0"
-                  network-name: "cnsbc_net"
+                  network-name: "cnsbc_access"
                   vips: ["11.0.2.10"]
+                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+                - name: "net1"
+                  network-name: "cnsbc_core"
+                  vips: ["11.0.3.10"]
                   secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-signaling component.
             # Optional; Default: [];
@@ -817,8 +821,12 @@ spec:
             vnics:
               openstack:
                 - name: "net0"
-                  network-name: "cnsbc_net"
+                  network-name: "cnsbc_access"
                   vips: ["11.0.2.11"]
+                  secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
+                - name: "net1"
+                  network-name: "cnsbc_core"
+                  vips: ["11.0.3.11"]
                   secgroup: ["507b536b-92ba-4724-8298-1743b630caf4"]
             # metricsAllowList is the list of additional metrics that will be exported by the cnsbc-media component.
             # Optional; Default: [];
@@ -1122,7 +1130,7 @@ spec:
             vnics:
               openstack:
                 - name: net0
-                  network-name: cnsbc_net
+                  network-name: cnsbc_access
                   vips:
                     - 11.0.2.12
           # On SMT-enabled systems with 'full-pcpu-only' enabled in static CPU management:
