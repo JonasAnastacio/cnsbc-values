@@ -818,7 +818,7 @@ spec:
               #   caroot.cer: Store the CA Bundle
               #   keystore.txt: Store the keystore password
               #   truststore.txt: Store the truststore password
-              certSecretName: "console-ingress-secret"
+              certSecretName: "console-ingress-secret-new"
           # log is for configuring log level of IAM Gateway
           log:
             # level specifies log level of processes
