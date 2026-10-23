@@ -229,7 +229,7 @@ spec:
           # Optional; Allowed-Values: true, false; Default: true;
           # impact: When this flag is set to false, cardinality of metrics that are being exported to Prometheus by SE/ME/TE will increase based on configuration
           # Immutable: No
-          enableMetricsAllowList: true
+          enableMetricsAllowList: false
           # Start of global level tls parameters subsection
           tls:
             # certificates contains the list of TLS certificates signed by certificate authority
